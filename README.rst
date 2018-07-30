@@ -23,7 +23,7 @@
   :target: https://saythanks.io/to/bachya
 
 pyopenuv is a simple Python library for retrieving UV-related information from
-`openuv.io <https://openuv.io/>`_
+`openuv.io <https://openuv.io/>`_.
 
 ☀️  Installation
 ===============
@@ -62,6 +62,8 @@ pyopenuv starts within an
       # YOUR CODE HERE
 
   asyncio.get_event_loop().run_until_complete(main())
+
+Get an API key: `https://www.openuv.io/console <https://www.openuv.io/console>`_
 
 Create a client and initialize it:
 
