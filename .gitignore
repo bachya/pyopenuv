@@ -1,0 +1,10 @@
+*.pyc
+.cache
+report.xml
+build/
+dist/
+*.egg-info/
+.mypy_cache
+.pytest_cache
+coverage.xml
+.coverage

@@ -1,0 +1,6 @@
+[run]
+source = pyopenuv
+
+omit =
+    pyopenuv/__version__.py
+
