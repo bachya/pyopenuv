@@ -1,63 +1,45 @@
-📡 pytile: A simple Python API for Tile® Bluetooth trackers
-===========================================================
+☀️  pyopenuv: A simple Python API for data from openuv.io
+========================================================
 
-.. image:: https://travis-ci.org/bachya/pytile.svg?branch=master
-  :target: https://travis-ci.org/bachya/pytile
+.. image:: https://travis-ci.org/bachya/pyopenuv.svg?branch=master
+  :target: https://travis-ci.org/bachya/pyopenuv
 
-.. image:: https://img.shields.io/pypi/v/pytile.svg
-  :target: https://pypi.python.org/pypi/pytile
+.. image:: https://img.shields.io/pypi/v/pyopenuv.svg
+  :target: https://pypi.python.org/pypi/pyopenuv
 
-.. image:: https://img.shields.io/pypi/pyversions/pytile.svg
-  :target: https://pypi.python.org/pypi/pytile
+.. image:: https://img.shields.io/pypi/pyversions/pyopenuv.svg
+  :target: https://pypi.python.org/pypi/pyopenuv
 
-.. image:: https://img.shields.io/pypi/l/pytile.svg
-  :target: https://github.com/bachya/pytile/blob/master/LICENSE
+.. image:: https://img.shields.io/pypi/l/pyopenuv.svg
+  :target: https://github.com/bachya/pyopenuv/blob/master/LICENSE
 
-.. image:: https://codecov.io/gh/bachya/pytile/branch/master/graph/badge.svg
-  :target: https://codecov.io/gh/bachya/pytile
+.. image:: https://codecov.io/gh/bachya/pyopenuv/branch/master/graph/badge.svg
+  :target: https://codecov.io/gh/bachya/pyopenuv
 
-.. image:: https://api.codeclimate.com/v1/badges/71eb642c735e33adcdfc/maintainability
-   :target: https://codeclimate.com/github/bachya/pytile/maintainability
+.. image:: https://api.codeclimate.com/v1/badges/a03c9e96f19a3dc37f98/maintainability
+   :target: https://codeclimate.com/github/bachya/pyopenuv/maintainability
 
 .. image:: https://img.shields.io/badge/SayThanks-!-1EAEDB.svg
   :target: https://saythanks.io/to/bachya
 
-pytile is a simple Python library for retrieving information on
-`Tile® Bluetooth trackers <https://www.thetileapp.com/en-us/>`_
-(including last location and more).
+pyopenuv is a simple Python library for retrieving UV-related information from
+`openuv.io <https://openuv.io/>`_
 
-This library is built on an unpublished, unofficial Tile API; it may alter or
-cease operation at any point.
-
-📡 PLEASE READ: 2.0.0 and Beyond
-================================
-
-Version 1.0.0 of pytile makes several breaking, but necessary changes:
-
-* Moves the underlying library from
-  `Requests <http://docs.python-requests.org/en/master/>`_ to
-  `aiohttp <https://aiohttp.readthedocs.io/en/stable/>`_
-* Changes the entire library to use :code:`asyncio`
-* Makes 3.5 the minimum version of Python required
-
-If you wish to continue using the previous, synchronous version of
-pytile, make sure to pin version 1.1.0.
-
-📡 Installation
+☀️  Installation
 ===============
 
 .. code-block:: bash
 
-  $ pip install pytile
+  $ pip install pyopenuv
 
-📡 Usage
+☀️  Usage
 ========
 
 .. code-block:: python
 
-  import pytile
+  import pyopenuv
 
-pytile starts within an
+pyopenuv starts within an
 `aiohttp <https://aiohttp.readthedocs.io/en/stable/>`_ :code:`ClientSession`:
 
 .. code-block:: python
@@ -66,7 +48,7 @@ pytile starts within an
 
   from aiohttp import ClientSession
 
-  from pytile import Client
+  from pyopenuv import Client
 
 
   async def main() -> None:
@@ -85,28 +67,38 @@ Create a client and initialize it:
 
 .. code-block:: python
 
-  client = pytile.Client('<TILE EMAIL ADDRESS>', '<TILE_PASSWORD>', websession)
-  await client.async_init()
+  client = pyopenuv.Client(
+  '<OPENUV.IO API KEY>',
+  '<LATITUDE>',
+  '<LONGITUDE>',
+  websession,
+  altitude='<ALTITUDE>')
 
 Then, get to it!
 
 .. code-block:: python
 
-  # Get all Tiles associated with an account:
-  await client.tiles.all()
+  # Get current UV index information:
+  await client.uv_index()
+
+  # Get forecasted UV information:
+  await client.uv_forecast()
+
+  # Get information on the window of time during which SPF protection should
+  # be used:
+  await client.uv_protection_window()
 
 
-📡 Contributing
+☀️  Contributing
 ===============
 
-#. `Check for open features/bugs <https://github.com/bachya/pytile/issues>`_
-   or `initiate a discussion on one <https://github.com/bachya/pytile/issues/new>`_.
-#. `Fork the repository <https://github.com/bachya/pytile/fork>`_.
+#. `Check for open features/bugs <https://github.com/bachya/pyopenuv/issues>`_
+   or `initiate a discussion on one <https://github.com/bachya/pyopenuv/issues/new>`_.
+#. `Fork the repository <https://github.com/bachya/pyopenuv/fork>`_.
 #. Install the dev environment: :code:`make init`.
 #. Enter the virtual environment: :code:`pipenv shell`
 #. Code your new feature or bug fix.
 #. Write a test that covers your new functionality.
 #. Run tests: :code:`make test`
-#. Build new docs: :code:`make docs`
 #. Add yourself to AUTHORS.rst.
 #. Submit a pull request!
