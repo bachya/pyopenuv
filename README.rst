@@ -68,11 +68,11 @@ Create a client and initialize it:
 .. code-block:: python
 
   client = pyopenuv.Client(
-  '<OPENUV.IO API KEY>',
-  '<LATITUDE>',
-  '<LONGITUDE>',
-  websession,
-  altitude='<ALTITUDE>')
+    '<OPENUV.IO API KEY>',
+    '<LATITUDE>',
+    '<LONGITUDE>',
+    websession,
+    altitude='<ALTITUDE>')
 
 Then, get to it!
 
