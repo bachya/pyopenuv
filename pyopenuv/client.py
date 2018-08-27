@@ -53,7 +53,7 @@ class Client:
                 return await resp.json(content_type=None)
             except client_exceptions.ClientError as err:
                 if any(code in str(err) for code in ('401', '403')):
-                    raise InvalidApiKeyError()
+                    raise InvalidApiKeyError('Invalid API key')
                 raise RequestError(
                     'Error requesting data from {0}: {1}'.format(
                         endpoint, err)) from None
