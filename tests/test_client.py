@@ -6,7 +6,7 @@ import aiohttp
 import pytest
 
 from pyopenuv import Client
-from pyopenuv.errors import RequestError
+from pyopenuv.errors import InvalidApiKeyError, RequestError
 
 from .const import TEST_ALTITUDE, TEST_API_KEY, TEST_LATITUDE, TEST_LONGITUDE
 
@@ -92,8 +92,27 @@ def fixture_uv_index():
 
 
 @pytest.mark.asyncio
+async def test_bad_api_key(aresponses, event_loop):
+    """Test the that the property exception is raised with a bad API key."""
+    aresponses.add(
+        'api.openuv.io', '/api/v1/protection', 'get',
+        aresponses.Response(
+            text='', status=403))
+
+    with pytest.raises(InvalidApiKeyError):
+        async with aiohttp.ClientSession(loop=event_loop) as websession:
+            client = Client(
+                TEST_API_KEY,
+                TEST_LATITUDE,
+                TEST_LONGITUDE,
+                websession,
+                altitude=TEST_ALTITUDE)
+            await client.uv_protection_window()
+
+
+@pytest.mark.asyncio
 async def test_bad_request(aresponses, event_loop):
-    """Test the creation of a client."""
+    """Test that the proper exception is raised during a bad request."""
     aresponses.add(
         'api.openuv.io', '/api/v1/bad_endpoint', 'get',
         aresponses.Response(
@@ -128,7 +147,7 @@ async def test_create(event_loop):
 @pytest.mark.asyncio
 async def test_protection_window(
         aresponses, event_loop, fixture_protection_window):
-    """Test successfully retrieving UV forecast info."""
+    """Test successfully retrieving the protection window."""
     aresponses.add(
         'api.openuv.io', '/api/v1/protection', 'get',
         aresponses.Response(

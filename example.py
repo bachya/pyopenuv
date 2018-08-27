@@ -18,7 +18,7 @@ async def run(websession: ClientSession):
     try:
         # Create a client:
         client = Client(
-            '82caa66dac167277369992ddc188d26e',
+            '<API_KEY>',
             39.7974509,
             -104.8887227,
             websession,

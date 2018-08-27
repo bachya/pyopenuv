@@ -1,7 +1,7 @@
-"""Define a client to interact with Pollen.com."""
+"""Define a client to interact with openuv.io."""
 from aiohttp import ClientSession, client_exceptions
 
-from .errors import RequestError
+from .errors import InvalidApiKeyError, RequestError
 
 API_URL_SCAFFOLD = 'https://api.openuv.io/api/v1'
 
@@ -52,6 +52,8 @@ class Client:
                 resp.raise_for_status()
                 return await resp.json(content_type=None)
             except client_exceptions.ClientError as err:
+                if any(code in str(err) for code in ('401', '403')):
+                    raise InvalidApiKeyError()
                 raise RequestError(
                     'Error requesting data from {0}: {1}'.format(
                         endpoint, err)) from None

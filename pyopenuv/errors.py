@@ -6,6 +6,11 @@ class OpenUvError(Exception):
     pass
 
 
+class InvalidApiKeyError(OpenUvError):
+    """Define an error related to invalid API keys."""
+    pass
+
+
 class RequestError(OpenUvError):
     """Define an error related to invalid requests."""
     pass
