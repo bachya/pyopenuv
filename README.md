@@ -8,7 +8,7 @@
 [![Maintainability](https://api.codeclimate.com/v1/badges/a03c9e96f19a3dc37f98/maintainability)](https://codeclimate.com/github/bachya/pyopenuv/maintainability)
 [![Say Thanks](https://img.shields.io/badge/SayThanks-!-1EAEDB.svg)](https://saythanks.io/to/bachya)
 
-pyopenuv is a simple Python library for retrieving UV-related information from
+`pyopenuv` is a simple Python library for retrieving UV-related information from
 [openuv.io](https://openuv.io/).
 
 # ☀️  Installation
