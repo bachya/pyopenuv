@@ -11,13 +11,13 @@
 `pyopenuv` is a simple Python library for retrieving UV-related information from
 [openuv.io](https://openuv.io/).
 
-# ☀️  Installation
+# Installation
 
 ```python
 pip install pyopenuv
 ```
 
-# ☀️  Usage
+# Usage
 
 First, get an API key: https://www.openuv.io/console
 
@@ -75,7 +75,7 @@ async def main() -> None:
 asyncio.get_event_loop().run_until_complete(main())
 ```
 
-# ☀️  Contributing
+# Contributing
 
 1. [Check for open features/bugs](https://github.com/bachya/pyopenuv/issues)
   or [initiate a discussion on one](https://github.com/bachya/pyopenuv/issues/new).
