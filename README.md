@@ -14,7 +14,7 @@
 # ☀️  Installation
 
 ```python
-$ pip install pyopenuv
+pip install pyopenuv
 ```
 
 # ☀️  Usage
