@@ -1,6 +1,6 @@
 """Define utilities."""
 
-from aiohttp import ClientSession, client_exceptions
+from aiohttp import ClientSession
 
 
 async def validate_api_key(api_key: str, websession: ClientSession) -> bool:
