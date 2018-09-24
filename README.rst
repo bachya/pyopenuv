@@ -54,42 +54,39 @@ pyopenuv starts within an
   async def main() -> None:
       """Create the aiohttp session and run the example."""
       async with ClientSession() as websession:
-          await run(websession)
+        # YOUR CODE HERE
 
-
-  async def run(websession):
-      """Run."""
-      # YOUR CODE HERE
 
   asyncio.get_event_loop().run_until_complete(main())
 
 Get an API key: `https://www.openuv.io/console <https://www.openuv.io/console>`_
 
-Create a client and initialize it:
+Create a client and initialize it, then get to it:
 
 .. code-block:: python
 
-  client = pyopenuv.Client(
-    '<OPENUV.IO API KEY>',
-    '<LATITUDE>',
-    '<LONGITUDE>',
-    websession,
-    altitude='<ALTITUDE>')
+  async def main() -> None:
+      """Create the aiohttp session and run the example."""
+      async with ClientSession() as websession:
+        client = pyopenuv.Client(
+          "<OPENUV.IO API KEY>",
+          "<LATITUDE>",
+          "<LONGITUDE>",
+          websession,
+          altitude="<ALTITUDE>")
 
-Then, get to it!
+        # Get current UV index information:
+        await client.uv_index()
 
-.. code-block:: python
+        # Get forecasted UV information:
+        await client.uv_forecast()
 
-  # Get current UV index information:
-  await client.uv_index()
+        # Get information on the window of time during which SPF protection
+        # should be used:
+        await client.uv_protection_window()
 
-  # Get forecasted UV information:
-  await client.uv_forecast()
 
-  # Get information on the window of time during which SPF protection should
-  # be used:
-  await client.uv_protection_window()
-
+  asyncio.get_event_loop().run_until_complete(main())
 
 ☀️  Contributing
 ===============
