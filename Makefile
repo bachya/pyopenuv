@@ -9,7 +9,7 @@ lint:
 	pipenv run pydocstyle pyopenuv
 	pipenv run pylint pyopenuv
 publish:
-	python setup.py sdist bdist_wheel
+	pipenv run python setup.py sdist bdist_wheel
 	pipenv run twine upload dist/*
 	rm -rf dist/ build/ .egg pyopenuv.egg-info/
 test:
