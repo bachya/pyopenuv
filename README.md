@@ -16,14 +16,13 @@
 ```python
 pip install pyopenuv
 ```
+
 # API Key
 
-You can get an AirVisual API key from
+You can get an API key from
 [the OpenUV console](https://www.openuv.io/console).
 
 # Usage
-
-First, get an API key: 
 
 `pyopenuv` starts within an
 [aiohttp](https://aiohttp.readthedocs.io/en/stable/) `ClientSession`:
