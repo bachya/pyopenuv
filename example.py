@@ -1,42 +1,30 @@
 """Run an example script to quickly test."""
 import asyncio
-
-from aiohttp import ClientSession
+import logging
 
 from pyopenuv import Client
 from pyopenuv.errors import OpenUvError
 
+_LOGGER = logging.getLogger()
+
 
 async def main() -> None:
     """Create the aiohttp session and run the example."""
-    async with ClientSession() as websession:
-        await run(websession)
+    logging.basicConfig(level=logging.INFO)
 
-
-async def run(websession: ClientSession):
-    """Run."""
     try:
         # Create a client:
-        client = Client(
-            '<API_KEY>',
-            39.7974509,
-            -104.8887227,
-            websession,
-            altitude=1609.3)
+        client = Client('<API_KEY>', 39.7974509, -104.8887227, altitude=1609.3)
 
         # Get current UV info:
-        print('CURRENT UV DATA:')
-        print(await client.uv_index())
+        _LOGGER.info('CURRENT UV DATA: %s', await client.uv_index())
 
         # Get forecasted UV info:
-        print()
-        print('FORECASTED UV DATA:')
-        print(await client.uv_forecast())
+        _LOGGER.info('FORECASTED UV DATA: %s', await client.uv_forecast())
 
         # Get UV protection window:
-        print()
-        print('UV PROTECTION WINDOW:')
-        print(await client.uv_protection_window())
+        _LOGGER.info(
+            'UV PROTECTION WINDOW: %s', await client.uv_protection_window())
     except OpenUvError as err:
         print(err)
 
