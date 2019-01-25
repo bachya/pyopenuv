@@ -35,27 +35,35 @@ You can get an API key from
 
 # Usage
 
-`pyopenuv` starts within an
-[aiohttp](https://aiohttp.readthedocs.io/en/stable/) `ClientSession`:
-
 ```python
 import asyncio
-
-from aiohttp import ClientSession
 
 from pyopenuv import Client
 
 
 async def main() -> None:
-    """Create the aiohttp session and run the example."""
-    async with ClientSession() as websession:
-      # YOUR CODE HERE
+    """Rock and roll."""
+    client = pyopenuv.Client(
+      "<OPENUV.IO API KEY>",
+      "<LATITUDE>",
+      "<LONGITUDE>",
+      altitude="<ALTITUDE>")
+
+    # Get current UV index information:
+    await client.uv_index()
+
+    # Get forecasted UV information:
+    await client.uv_forecast()
+
+    # Get information on the window of time during which SPF protection
+    # should be used:
+    await client.uv_protection_window()
 
 
 asyncio.get_event_loop().run_until_complete(main())
 ```
 
-Create a client, initialize it, then get to it:
+If you have an existing `aiohttp.ClientSession`, you can use it:
 
 ```python
 import asyncio
@@ -66,24 +74,15 @@ from pyopenuv import Client
 
 
 async def main() -> None:
-    """Create the aiohttp session and run the example."""
-    async with ClientSession() as websession:
-      client = pyopenuv.Client(
-        "<OPENUV.IO API KEY>",
-        "<LATITUDE>",
-        "<LONGITUDE>",
-        websession,
-        altitude="<ALTITUDE>")
+    """Rock and roll."""
+    client = pyopenuv.Client(
+      "<OPENUV.IO API KEY>",
+      "<LATITUDE>",
+      "<LONGITUDE>",
+      altitude="<ALTITUDE>",
+      session=session)
 
-      # Get current UV index information:
-      await client.uv_index()
-
-      # Get forecasted UV information:
-      await client.uv_forecast()
-
-      # Get information on the window of time during which SPF protection
-      # should be used:
-      await client.uv_protection_window()
+      # ...
 
 
 asyncio.get_event_loop().run_until_complete(main())
