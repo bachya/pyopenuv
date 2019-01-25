@@ -14,12 +14,12 @@ class Client:
             api_key: str,
             latitude: float,
             longitude: float,
+            websession: ClientSession,
             *,
-            altitude: float = 0.0,
-            session: ClientSession = None) -> None:
+            altitude: float = 0.0) -> None:
         """Initialize."""
         self._api_key = api_key
-        self._session = session or ClientSession()
+        self._websession = websession
         self.altitude = str(altitude)
         self.latitude = str(latitude)
         self.longitude = str(longitude)
@@ -46,8 +46,8 @@ class Client:
             'alt': self.altitude
         })
 
-        async with self._session.request(method, url, headers=headers,
-                                         params=params) as resp:
+        async with self._websession.request(method, url, headers=headers,
+                                            params=params) as resp:
             try:
                 resp.raise_for_status()
                 return await resp.json(content_type=None)
