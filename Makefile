@@ -3,7 +3,7 @@ coverage:
 init:
 	pip install --upgrade pip pipenv
 	pipenv lock
-	pipenv install --dev
+	pipenv install --three --dev
 lint:
 	pipenv run flake8 pyopenuv
 	pipenv run pydocstyle pyopenuv
