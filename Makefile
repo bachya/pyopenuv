@@ -2,6 +2,7 @@ coverage:
 	pipenv run py.test -s --verbose --cov-report term-missing --cov-report xml --cov=pyopenuv tests
 init:
 	pip install --upgrade pip pipenv
+	pipenv lock --clear
 	pipenv lock
 	pipenv install --three --dev
 lint:
