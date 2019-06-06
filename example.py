@@ -18,24 +18,21 @@ async def run(websession: ClientSession):
     try:
         # Create a client:
         client = Client(
-            '<API_KEY>',
-            39.7974509,
-            -104.8887227,
-            websession,
-            altitude=1609.3)
+            "<API_KEY>", 39.7974509, -104.8887227, websession, altitude=1609.3
+        )
 
         # Get current UV info:
-        print('CURRENT UV DATA:')
+        print("CURRENT UV DATA:")
         print(await client.uv_index())
 
         # Get forecasted UV info:
         print()
-        print('FORECASTED UV DATA:')
+        print("FORECASTED UV DATA:")
         print(await client.uv_forecast())
 
         # Get UV protection window:
         print()
-        print('UV PROTECTION WINDOW:')
+        print("UV PROTECTION WINDOW:")
         print(await client.uv_protection_window())
     except OpenUvError as err:
         print(err)

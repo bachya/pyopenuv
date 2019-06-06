@@ -10,7 +10,7 @@ def fixture_protection_window():
             "from_time": "2018-07-30T15:17:49.750Z",
             "from_uv": 3.2509,
             "to_time": "2018-07-30T22:47:49.750Z",
-            "to_uv": 3.6483
+            "to_uv": 3.6483,
         }
     }
 
@@ -19,21 +19,24 @@ def fixture_protection_window():
 def fixture_uv_forecast():
     """Return a /forecast response."""
     return {
-        "result": [{
-            "uv": 0,
-            "uv_time": "2018-07-30T11:57:49.750Z",
-            "sun_position": {
-                "azimuth": -2.0081567900835937,
-                "altitude": -0.011856950133816461
-            }
-        }, {
-            "uv": 0.2446,
-            "uv_time": "2018-07-30T12:57:49.750Z",
-            "sun_position": {
-                "azimuth": -1.845666592871966,
-                "altitude": 0.1764062658258758
-            }
-        }]
+        "result": [
+            {
+                "uv": 0,
+                "uv_time": "2018-07-30T11:57:49.750Z",
+                "sun_position": {
+                    "azimuth": -2.0081567900835937,
+                    "altitude": -0.011856950133816461,
+                },
+            },
+            {
+                "uv": 0.2446,
+                "uv_time": "2018-07-30T12:57:49.750Z",
+                "sun_position": {
+                    "azimuth": -1.845666592871966,
+                    "altitude": 0.1764062658258758,
+                },
+            },
+        ]
     }
 
 
@@ -54,7 +57,7 @@ def fixture_uv_index():
                 "st3": 32,
                 "st4": 40,
                 "st5": 65,
-                "st6": 121
+                "st6": 121,
             },
             "sun_info": {
                 "sun_times": {
@@ -71,12 +74,12 @@ def fixture_uv_index():
                     "nightEnd": "2018-07-30T10:08:47.846Z",
                     "night": "2018-07-31T04:05:35.163Z",
                     "goldenHourEnd": "2018-07-30T12:36:14.026Z",
-                    "goldenHour": "2018-07-31T01:38:08.983Z"
+                    "goldenHour": "2018-07-31T01:38:08.983Z",
                 },
                 "sun_position": {
                     "azimuth": 0.9567419441563509,
-                    "altitude": 1.0235714275875594
-                }
-            }
+                    "altitude": 1.0235714275875594,
+                },
+            },
         }
     }
