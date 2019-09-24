@@ -5,6 +5,9 @@ from .errors import InvalidApiKeyError, RequestError
 
 API_URL_SCAFFOLD = "https://api.openuv.io/api/v1"
 
+DEFAULT_PROTECTION_HIGH = 3.5
+DEFAULT_PROTECTION_LOW = 3.5
+
 
 class Client:
     """Define the client."""
@@ -16,7 +19,7 @@ class Client:
         longitude: float,
         websession: ClientSession,
         *,
-        altitude: float = 0.0
+        altitude: float = 0.0,
     ) -> None:
         """Initialize."""
         self._api_key = api_key
@@ -28,9 +31,7 @@ class Client:
     async def request(
         self, method: str, endpoint: str, *, headers: dict = None, params: dict = None
     ) -> dict:
-        """Make a request against air-matters.com."""
-        url = "{0}/{1}".format(API_URL_SCAFFOLD, endpoint)
-
+        """Make a request against OpenUV."""
         if not headers:
             headers = {}
         headers.update({"x-access-token": self._api_key})
@@ -42,7 +43,7 @@ class Client:
         )
 
         async with self._websession.request(
-            method, url, headers=headers, params=params
+            method, f"{API_URL_SCAFFOLD}/{endpoint}", headers=headers, params=params
         ) as resp:
             try:
                 resp.raise_for_status()
@@ -51,7 +52,7 @@ class Client:
                 if any(code in str(err) for code in ("401", "403")):
                     raise InvalidApiKeyError("Invalid API key")
                 raise RequestError(
-                    "Error requesting data from {0}: {1}".format(endpoint, err)
+                    f"Error requesting data from {endpoint}: {err}"
                 ) from None
 
     async def uv_forecast(self) -> dict:
@@ -62,7 +63,9 @@ class Client:
         """Get current UV data."""
         return await self.request("get", "uv")
 
-    async def uv_protection_window(self, low: float = 3.5, high: float = 3.5) -> dict:
+    async def uv_protection_window(
+        self, low: float = DEFAULT_PROTECTION_LOW, high: float = DEFAULT_PROTECTION_HIGH
+    ) -> dict:
         """Get data on when a UV protection window is."""
         return await self.request(
             "get", "protection", params={"from": str(low), "to": str(high)}
