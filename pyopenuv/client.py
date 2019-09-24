@@ -3,10 +3,10 @@ from aiohttp import ClientSession, client_exceptions
 
 from .errors import InvalidApiKeyError, RequestError
 
-API_URL_SCAFFOLD = "https://api.openuv.io/api/v1"
+API_URL_SCAFFOLD: str = "https://api.openuv.io/api/v1"
 
-DEFAULT_PROTECTION_HIGH = 3.5
-DEFAULT_PROTECTION_LOW = 3.5
+DEFAULT_PROTECTION_HIGH: float = 3.5
+DEFAULT_PROTECTION_LOW: float = 3.5
 
 
 class Client:
@@ -22,11 +22,11 @@ class Client:
         altitude: float = 0.0,
     ) -> None:
         """Initialize."""
-        self._api_key = api_key
-        self._websession = websession
-        self.altitude = str(altitude)
-        self.latitude = str(latitude)
-        self.longitude = str(longitude)
+        self._api_key: str = api_key
+        self._websession: ClientSession = websession
+        self.altitude: str = str(altitude)
+        self.latitude: str = str(latitude)
+        self.longitude: str = str(longitude)
 
     async def request(
         self, method: str, endpoint: str, *, headers: dict = None, params: dict = None
