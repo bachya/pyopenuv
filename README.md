@@ -1,6 +1,6 @@
 # ☀️  pyopenuv: A simple Python API for data from openuv.io
 
-[![Travis CI](https://travis-ci.org/bachya/pyopenuv.svg?branch=master)](https://travis-ci.org/bachya/pyopenuv)
+[![CI](https://github.com/bachya/pyopenuv/workflows/CI/badge.svg)](https://github.com/bachya/pyopenuv/actions)
 [![PyPi](https://img.shields.io/pypi/v/pyopenuv.svg)](https://pypi.python.org/pypi/pyopenuv)
 [![Version](https://img.shields.io/pypi/pyversions/pyopenuv.svg)](https://pypi.python.org/pypi/pyopenuv)
 [![License](https://img.shields.io/pypi/l/pyopenuv.svg)](https://github.com/bachya/pyopenuv/blob/master/LICENSE)
