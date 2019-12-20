@@ -4,7 +4,6 @@ import json
 
 import aiohttp
 import pytest
-
 from pyopenuv import Client
 from pyopenuv.errors import InvalidApiKeyError, RequestError
 
