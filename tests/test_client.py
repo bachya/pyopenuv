@@ -3,9 +3,10 @@
 import json
 
 import aiohttp
+import pytest
+
 from pyopenuv import Client
 from pyopenuv.errors import InvalidApiKeyError, RequestError
-import pytest
 
 from .const import TEST_ALTITUDE, TEST_API_KEY, TEST_LATITUDE, TEST_LONGITUDE
 from .fixtures.client import *  # noqa
