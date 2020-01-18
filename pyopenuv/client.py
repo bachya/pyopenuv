@@ -1,7 +1,11 @@
 """Define a client to interact with openuv.io."""
+import logging
+
 from aiohttp import ClientSession, client_exceptions
 
 from .errors import InvalidApiKeyError, RequestError
+
+_LOGGER = logging.getLogger(__name__)
 
 API_URL_SCAFFOLD: str = "https://api.openuv.io/api/v1"
 
@@ -47,8 +51,11 @@ class Client:
         ) as resp:
             try:
                 resp.raise_for_status()
-                return await resp.json(content_type=None)
+                data = await resp.json(content_type=None)
+                _LOGGER.info(data)
+                return data
             except client_exceptions.ClientError as err:
+                _LOGGER.debug(err)
                 if any(code in str(err) for code in ("401", "403")):
                     raise InvalidApiKeyError("Invalid API key")
                 raise RequestError(
