@@ -1,20 +1,22 @@
 """Define tests for the client object."""
-# pylint: disable=redefined-outer-name,unused-import
-import json
-
 import aiohttp
 import pytest
 
 from pyopenuv import Client
 from pyopenuv.errors import InvalidApiKeyError, RequestError
 
-from .const import TEST_ALTITUDE, TEST_API_KEY, TEST_LATITUDE, TEST_LONGITUDE
-from .fixtures.client import *  # noqa
+from .common import (
+    TEST_ALTITUDE,
+    TEST_API_KEY,
+    TEST_LATITUDE,
+    TEST_LONGITUDE,
+    load_fixture,
+)
 
 
 @pytest.mark.asyncio
-async def test_bad_api_key(aresponses, event_loop):
-    """Test the that the property exception is raised with a bad API key."""
+async def test_bad_api_key(aresponses):
+    """Test the that the proper exception is raised with a bad API key."""
     aresponses.add(
         "api.openuv.io",
         "/api/v1/protection",
@@ -23,7 +25,7 @@ async def test_bad_api_key(aresponses, event_loop):
     )
 
     with pytest.raises(InvalidApiKeyError):
-        async with aiohttp.ClientSession(loop=event_loop) as websession:
+        async with aiohttp.ClientSession() as websession:
             client = Client(
                 TEST_API_KEY,
                 TEST_LATITUDE,
@@ -35,7 +37,7 @@ async def test_bad_api_key(aresponses, event_loop):
 
 
 @pytest.mark.asyncio
-async def test_bad_request(aresponses, event_loop):
+async def test_bad_request(aresponses):
     """Test that the proper exception is raised during a bad request."""
     aresponses.add(
         "api.openuv.io",
@@ -45,7 +47,7 @@ async def test_bad_request(aresponses, event_loop):
     )
 
     with pytest.raises(RequestError):
-        async with aiohttp.ClientSession(loop=event_loop) as websession:
+        async with aiohttp.ClientSession() as websession:
             client = Client(
                 TEST_API_KEY,
                 TEST_LATITUDE,
@@ -57,9 +59,9 @@ async def test_bad_request(aresponses, event_loop):
 
 
 @pytest.mark.asyncio
-async def test_create(event_loop):
+async def test_create():
     """Test the creation of a client."""
-    async with aiohttp.ClientSession(loop=event_loop) as websession:
+    async with aiohttp.ClientSession() as websession:
         client = Client(
             TEST_API_KEY,
             TEST_LATITUDE,
@@ -73,16 +75,18 @@ async def test_create(event_loop):
 
 
 @pytest.mark.asyncio
-async def test_protection_window(aresponses, event_loop, fixture_protection_window):
+async def test_protection_window(aresponses):
     """Test successfully retrieving the protection window."""
     aresponses.add(
         "api.openuv.io",
         "/api/v1/protection",
         "get",
-        aresponses.Response(text=json.dumps(fixture_protection_window), status=200),
+        aresponses.Response(
+            text=load_fixture("protection_window_response.json"), status=200
+        ),
     )
 
-    async with aiohttp.ClientSession(loop=event_loop) as websession:
+    async with aiohttp.ClientSession() as websession:
         client = Client(
             TEST_API_KEY,
             TEST_LATITUDE,
@@ -95,16 +99,16 @@ async def test_protection_window(aresponses, event_loop, fixture_protection_wind
 
 
 @pytest.mark.asyncio
-async def test_uv_forecast(aresponses, event_loop, fixture_uv_forecast):
+async def test_uv_forecast(aresponses):
     """Test successfully retrieving UV forecast info."""
     aresponses.add(
         "api.openuv.io",
         "/api/v1/forecast",
         "get",
-        aresponses.Response(text=json.dumps(fixture_uv_forecast), status=200),
+        aresponses.Response(text=load_fixture("uv_forecast_response.json"), status=200),
     )
 
-    async with aiohttp.ClientSession(loop=event_loop) as websession:
+    async with aiohttp.ClientSession() as websession:
         client = Client(
             TEST_API_KEY,
             TEST_LATITUDE,
@@ -117,16 +121,16 @@ async def test_uv_forecast(aresponses, event_loop, fixture_uv_forecast):
 
 
 @pytest.mark.asyncio
-async def test_uv_index(aresponses, event_loop, fixture_uv_index):
+async def test_uv_index(aresponses):
     """Test successfully retrieving UV index info."""
     aresponses.add(
         "api.openuv.io",
         "/api/v1/uv",
         "get",
-        aresponses.Response(text=json.dumps(fixture_uv_index), status=200),
+        aresponses.Response(text=load_fixture("uv_index_response.json"), status=200),
     )
 
-    async with aiohttp.ClientSession(loop=event_loop) as websession:
+    async with aiohttp.ClientSession() as websession:
         client = Client(
             TEST_API_KEY,
             TEST_LATITUDE,
