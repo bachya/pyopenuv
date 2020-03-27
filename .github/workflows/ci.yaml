@@ -88,4 +88,3 @@ jobs:
           venv/bin/pre-commit run mypy --all-files
           venv/bin/pre-commit run pydocstyle --all-files
           venv/bin/pre-commit run shellcheck --all-files
-          shellcheck script/*
