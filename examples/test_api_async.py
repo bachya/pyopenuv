@@ -1,4 +1,5 @@
 """Run an example script to quickly test."""
+import asyncio
 import logging
 import time
 
@@ -13,26 +14,26 @@ LONGITUDE = -104.8887227
 ALTITUDE = 1609.3
 
 
-def main() -> None:
+async def main() -> None:
     """Create the aiohttp session and run the example."""
     logging.basicConfig(level=logging.DEBUG)
 
-    client = Client(API_KEY, LATITUDE, LONGITUDE, altitude=ALTITUDE)
+    client = Client(API_KEY, LATITUDE, LONGITUDE, altitude=ALTITUDE, use_async=True)
 
     start = time.time()
 
     try:
         # Get current UV info:
         _LOGGER.info("CURRENT UV DATA:")
-        _LOGGER.info(client.uv_index())
+        _LOGGER.info(await client.uv_index())
 
         # Get forecasted UV info:
         _LOGGER.info("FORECASTED UV DATA:")
-        _LOGGER.info(client.uv_forecast())
+        _LOGGER.info(await client.uv_forecast())
 
         # Get UV protection window:
         _LOGGER.info("UV PROTECTION WINDOW:")
-        _LOGGER.info(client.uv_protection_window())
+        _LOGGER.info(await client.uv_protection_window())
     except OpenUvError as err:
         _LOGGER.info(err)
 
@@ -41,4 +42,4 @@ def main() -> None:
     _LOGGER.info("Execution time: %s seconds", end - start)
 
 
-main()
+asyncio.get_event_loop().run_until_complete(main())
