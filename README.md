@@ -31,8 +31,7 @@ pip install pyopenuv
 
 * Python 3.6
 * Python 3.7
-* Python 3.8
-
+* Python 3.8 
 # API Key
 
 You can get an API key from
@@ -103,12 +102,12 @@ async def main():
 asyncio.get_event_loop().run_until_complete(main())
 ```
 
-By default and for ease, the `asyncio`-friendly mode won't save much time beyond the
-normal, sync syntax because a new connection to OpenUV is created with each method call.
-This shouldn't be a huge impact when calling a small number of coroutines, but if you are
-calling a larger number (or merely want to squeeze every second of runtime savings
-possible), an [`aiohttp`](https://github.com/aio-libs/aiohttp) `ClientSession` can be used
-for connection pooling:
+By default, the `asyncio`-friendly creates a new connection to OpenUV with each coroutine;
+this means that you won't get much in the way of runtime speed savings over the normal,
+sync API. If you are calling a large number of coroutines (or merely want to squeeze out
+every second of runtime savings possible), an
+[`aiohttp`](https://github.com/aio-libs/aiohttp) `ClientSession` can be used for connection
+pooling:
 
 ```python
 import asyncio
@@ -150,7 +149,8 @@ async def main():
 asyncio.get_event_loop().run_until_complete(main())
 ```
 
-Check out the `examples/` folder to compare the length of time each method takes.
+Check out the `[examples/`](https://github.com/bachya/pyopenuv/tree/dev/examples)
+directory for more info.
 
 # Contributing
 
