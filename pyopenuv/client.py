@@ -1,7 +1,10 @@
 """Define a client to interact with openuv.io."""
+import asyncio
 import logging
+from typing import Awaitable, Optional
 
-from aiohttp import ClientSession, client_exceptions
+from aiohttp import ClientSession, ClientTimeout
+from aiohttp.client_exceptions import ClientError
 
 from .errors import InvalidApiKeyError, RequestError
 
@@ -11,6 +14,17 @@ API_URL_SCAFFOLD: str = "https://api.openuv.io/api/v1"
 
 DEFAULT_PROTECTION_HIGH: float = 3.5
 DEFAULT_PROTECTION_LOW: float = 3.5
+DEFAULT_TIMEOUT = 30
+
+
+def _get_event_loop() -> asyncio.AbstractEventLoop:
+    """Retrieve the event loop or creates a new one."""
+    try:
+        return asyncio.get_event_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        return loop
 
 
 class Client:
@@ -21,18 +35,38 @@ class Client:
         api_key: str,
         latitude: float,
         longitude: float,
-        websession: ClientSession,
         *,
         altitude: float = 0.0,
+        event_loop: Optional[asyncio.AbstractEventLoop] = None,
+        session: Optional[ClientSession] = None,
+        use_async: bool = False,
     ) -> None:
         """Initialize."""
+        if session and not use_async:
+            raise ValueError(
+                "It doesn't make sense to use the session parameter without the "
+                "use_async parameter"
+            )
+
         self._api_key: str = api_key
-        self._websession: ClientSession = websession
+        self._loop: Optional[asyncio.AbstractEventLoop] = event_loop
+        self._session: ClientSession = session
+        self._use_async = use_async
         self.altitude: str = str(altitude)
         self.latitude: str = str(latitude)
         self.longitude: str = str(longitude)
 
-    async def request(
+    def _wrap_future(self, coro: Awaitable):
+        """Wrap a coroutine in a future and return or execute it."""
+        if not self._loop:
+            self._loop = _get_event_loop()
+
+        future = asyncio.ensure_future(coro, loop=self._loop)
+        if self._use_async:
+            return future
+        return self._loop.run_until_complete(future)
+
+    async def async_request(
         self, method: str, endpoint: str, *, headers: dict = None, params: dict = None
     ) -> dict:
         """Make a request against OpenUV."""
@@ -46,34 +80,46 @@ class Client:
             {"lat": self.latitude, "lng": self.longitude, "alt": self.altitude}
         )
 
-        async with self._websession.request(
-            method, f"{API_URL_SCAFFOLD}/{endpoint}", headers=headers, params=params
-        ) as resp:
-            try:
+        use_running_session = self._session and not self._session.closed
+
+        if use_running_session:
+            session = self._session
+        else:
+            session = ClientSession(timeout=ClientTimeout(total=DEFAULT_TIMEOUT))
+
+        try:
+            async with session.request(
+                method, f"{API_URL_SCAFFOLD}/{endpoint}", headers=headers, params=params
+            ) as resp:
                 resp.raise_for_status()
-                data = await resp.json(content_type=None)
-                _LOGGER.info(data)
+                data = await resp.json()
                 return data
-            except client_exceptions.ClientError as err:
-                _LOGGER.debug(err)
-                if any(code in str(err) for code in ("401", "403")):
-                    raise InvalidApiKeyError("Invalid API key")
-                raise RequestError(
-                    f"Error requesting data from {endpoint}: {err}"
-                ) from None
+        except asyncio.TimeoutError:
+            raise RequestError("Request to endpoint timed out: {endpoint}")
+        except ClientError as err:
+            if any(code in str(err) for code in ("401", "403")):
+                raise InvalidApiKeyError("Invalid API key")
+            raise RequestError(
+                f"Error requesting data from {endpoint}: {err}"
+            ) from None
+        finally:
+            if not use_running_session:
+                await session.close()
 
-    async def uv_forecast(self) -> dict:
+    def uv_forecast(self) -> dict:
         """Get forecasted UV data."""
-        return await self.request("get", "forecast")
+        return self._wrap_future(self.async_request("get", "forecast"))
 
-    async def uv_index(self) -> dict:
+    def uv_index(self) -> dict:
         """Get current UV data."""
-        return await self.request("get", "uv")
+        return self._wrap_future(self.async_request("get", "uv"))
 
-    async def uv_protection_window(
+    def uv_protection_window(
         self, low: float = DEFAULT_PROTECTION_LOW, high: float = DEFAULT_PROTECTION_HIGH
     ) -> dict:
         """Get data on when a UV protection window is."""
-        return await self.request(
-            "get", "protection", params={"from": str(low), "to": str(high)}
+        return self._wrap_future(
+            self.async_request(
+                "get", "protection", params={"from": str(low), "to": str(high)}
+            )
         )
