@@ -9,7 +9,15 @@
 [![Say Thanks](https://img.shields.io/badge/SayThanks-!-1EAEDB.svg)](https://saythanks.io/to/bachya)
 
 `pyopenuv` is a simple Python library for retrieving UV-related information from
-[openuv.io](https://openuv.io/).
+[openuv.io](https://openuv.io/). It supports both sync and async use cases.
+
+- [Installation](#installation)
+- [Python Versions](#python-versions)
+- [API Key](#api-key)
+- [Usage](#usage)
+  * [Sync (Normal) Usage](#sync--normal--usage)
+  * [Async Usage](#async-usage)
+- [Contributing](#contributing)
 
 # Installation
 
@@ -32,59 +40,117 @@ You can get an API key from
 
 # Usage
 
-`pyopenuv` starts within an
-[aiohttp](https://aiohttp.readthedocs.io/en/stable/) `ClientSession`:
+## Sync (Normal) Usage
+
+```python
+from pyopenuv import Client
+from pyopenuv.errors import OpenUvError
+
+API_KEY = "<OPENUV_API_KEY>"
+LATITUDE = 39.7974509
+LONGITUDE = -104.8887227
+ALTITUDE = 1609.3
+
+
+client = Client(API_KEY, LATITUDE, LONGITUDE, altitude=ALTITUDE)
+
+try:
+    # Get current UV info:
+    print(client.uv_index())
+
+    # Get forecasted UV info:
+    print(client.uv_forecast())
+
+    # Get UV protection window:
+    print(client.uv_protection_window())
+except OpenUvError as err:
+    print(f"There was an error: {err}")
+```
+
+## Async Usage
+
+To use the library in an `asyncio`-friendly way, simply pass the `use_async` parameter when
+creating a client. From there, the same methods can be used, but now as coroutines:
 
 ```python
 import asyncio
 
-from aiohttp import ClientSession
-
 from pyopenuv import Client
+from pyopenuv.errors import OpenUvError
+
+API_KEY = "<OPENUV_API_KEY>"
+LATITUDE = 39.7974509
+LONGITUDE = -104.8887227
+ALTITUDE = 1609.3
 
 
-async def main() -> None:
-    """Create the aiohttp session and run the example."""
-    async with ClientSession() as websession:
-      # YOUR CODE HERE
+async def main():
+    client = Client(API_KEY, LATITUDE, LONGITUDE, altitude=ALTITUDE, use_async=True)
+
+    try:
+        # Get current UV info:
+        print(await client.uv_index())
+
+        # Get forecasted UV info:
+        print(await client.uv_forecast())
+
+        # Get UV protection window:
+        print(await client.uv_protection_window())
+    except OpenUvError as err:
+        print(f"There was an error: {err}")
 
 
 asyncio.get_event_loop().run_until_complete(main())
 ```
 
-Create a client, initialize it, then get to it:
+By default and for ease, the `asyncio`-friendly mode won't save much time beyond the
+normal, sync syntax because a new connection to OpenUV is created with each method call.
+This shouldn't be a huge impact when calling a small number of coroutines, but if you are
+calling a larger number (or merely want to squeeze every second of runtime savings
+possible), an [`aiohttp`](https://github.com/aio-libs/aiohttp) `ClientSession` can be used
+for connection pooling:
 
 ```python
 import asyncio
 
 from aiohttp import ClientSession
-
 from pyopenuv import Client
+from pyopenuv.errors import OpenUvError
+
+API_KEY = "<OPENUV_API_KEY>"
+LATITUDE = 39.7974509
+LONGITUDE = -104.8887227
+ALTITUDE = 1609.3
 
 
-async def main() -> None:
-    """Create the aiohttp session and run the example."""
-    async with ClientSession() as websession:
-      client = pyopenuv.Client(
-        "<OPENUV.IO API KEY>",
-        "<LATITUDE>",
-        "<LONGITUDE>",
-        websession,
-        altitude="<ALTITUDE>")
+async def main():
+    async with ClientSession() as session:
+        client = Client(
+            API_KEY,
+            LATITUDE,
+            LONGITUDE,
+            altitude=ALTITUDE,
+            session=session,
+            use_async=True,
+        )
 
-      # Get current UV index information:
-      await client.uv_index()
+        try:
+            # Get current UV info:
+            print(await client.uv_index())
 
-      # Get forecasted UV information:
-      await client.uv_forecast()
+            # Get forecasted UV info:
+            print(await client.uv_forecast())
 
-      # Get information on the window of time during which SPF protection
-      # should be used:
-      await client.uv_protection_window()
+            # Get UV protection window:
+            print(await client.uv_protection_window())
+        except OpenUvError as err:
+            print(f"There was an error: {err}")
 
 
 asyncio.get_event_loop().run_until_complete(main())
 ```
+
+Check out the `examples/` folder to compare the length of time each method takes.
 
 # Contributing
 
