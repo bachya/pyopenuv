@@ -102,10 +102,10 @@ async def main():
 asyncio.get_event_loop().run_until_complete(main())
 ```
 
-By default, the `asyncio`-friendly creates a new connection to OpenUV with each coroutine;
-this means that you won't get much in the way of runtime speed savings over the normal,
-sync API. If you are calling a large number of coroutines (or merely want to squeeze out
-every second of runtime savings possible), an
+By default, the `asyncio`-friendly method creates a new connection to OpenUV with each
+coroutine; this means that you won't get much in the way of runtime speed savings over
+the normal, sync API. If you are calling a large number of coroutines (or merely want to
+squeeze out every second of runtime savings possible), an
 [`aiohttp`](https://github.com/aio-libs/aiohttp) `ClientSession` can be used for connection
 pooling:
 
