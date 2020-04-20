@@ -7,7 +7,6 @@ from asynctest import patch
 import pytest
 
 from pyopenuv import Client
-from pyopenuv.client import _get_event_loop
 from pyopenuv.errors import InvalidApiKeyError, RequestError
 
 from .common import (
@@ -37,7 +36,6 @@ async def test_bad_api_key(aresponses):
                 TEST_LONGITUDE,
                 altitude=TEST_ALTITUDE,
                 session=session,
-                use_async=True,
             )
             await client.uv_protection_window()
 
@@ -60,47 +58,8 @@ async def test_bad_request(aresponses):
                 TEST_LONGITUDE,
                 altitude=TEST_ALTITUDE,
                 session=session,
-                use_async=True,
             )
             await client.async_request("get", "bad_endpoint")
-
-
-@pytest.mark.asyncio
-async def test_create():
-    """Test the creation of a client."""
-    async with aiohttp.ClientSession() as session:
-        client = Client(
-            TEST_API_KEY,
-            TEST_LATITUDE,
-            TEST_LONGITUDE,
-            altitude=TEST_ALTITUDE,
-            session=session,
-            use_async=True,
-        )
-        assert client.altitude == TEST_ALTITUDE
-        assert client.latitude == TEST_LATITUDE
-        assert client.longitude == TEST_LONGITUDE
-
-        # Test that session with no use_async fails:
-        with pytest.raises(ValueError):
-            _ = Client(
-                TEST_API_KEY,
-                TEST_LATITUDE,
-                TEST_LONGITUDE,
-                altitude=TEST_ALTITUDE,
-                session=session,
-            )
-
-
-def test_get_event_loop():
-    """Test getting the active (or a new) event loop."""
-    loop = _get_event_loop()
-    assert isinstance(loop, asyncio.AbstractEventLoop)
-
-    # Test there being no currently running event loop generates one:
-    with patch("asyncio.get_event_loop", side_effect=RuntimeError):
-        loop = _get_event_loop()
-        assert isinstance(loop, asyncio.AbstractEventLoop)
 
 
 @pytest.mark.asyncio
@@ -124,7 +83,6 @@ async def test_protection_window(aresponses):
             TEST_LONGITUDE,
             altitude=TEST_ALTITUDE,
             session=session,
-            use_async=True,
         )
         data = await client.uv_protection_window()
         assert data["result"]["from_uv"] == 3.2509
@@ -140,12 +98,30 @@ async def test_timeout():
             TEST_LONGITUDE,
             altitude=TEST_ALTITUDE,
             session=session,
-            use_async=True,
         )
 
         with patch("aiohttp.ClientSession.request", side_effect=asyncio.TimeoutError):
             with pytest.raises(RequestError):
                 await client.uv_forecast()
+
+
+@pytest.mark.asyncio
+async def test_session_from_scratch(aresponses):
+    """Test that an aiohttp ClientSession is created on the fly if needed."""
+    aresponses.add(
+        "api.openuv.io",
+        "/api/v1/forecast",
+        "get",
+        aresponses.Response(
+            text=load_fixture("uv_forecast_response.json"),
+            status=200,
+            headers={"Content-Type": "application/json"},
+        ),
+    )
+
+    client = Client(TEST_API_KEY, TEST_LATITUDE, TEST_LONGITUDE, altitude=TEST_ALTITUDE)
+    data = await client.uv_forecast()
+    assert len(data["result"]) == 2
 
 
 @pytest.mark.asyncio
@@ -169,7 +145,6 @@ async def test_uv_forecast(aresponses):
             TEST_LONGITUDE,
             altitude=TEST_ALTITUDE,
             session=session,
-            use_async=True,
         )
         data = await client.uv_forecast()
         assert len(data["result"]) == 2
@@ -196,31 +171,6 @@ async def test_uv_index_async(aresponses):
             TEST_LONGITUDE,
             altitude=TEST_ALTITUDE,
             session=session,
-            use_async=True,
         )
         data = await client.uv_index()
         assert data["result"]["uv"] == 8.2342
-
-
-def test_uv_index_sync(aresponses, event_loop):
-    """Test successfully retrieving UV index info (sync)."""
-    aresponses.add(
-        "api.openuv.io",
-        "/api/v1/uv",
-        "get",
-        aresponses.Response(
-            text=load_fixture("uv_index_response.json"),
-            status=200,
-            headers={"Content-Type": "application/json"},
-        ),
-    )
-
-    client = Client(
-        TEST_API_KEY,
-        TEST_LATITUDE,
-        TEST_LONGITUDE,
-        altitude=TEST_ALTITUDE,
-        event_loop=event_loop,
-    )
-    data = client.uv_index()
-    assert data["result"]["uv"] == 8.2342
