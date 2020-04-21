@@ -15,8 +15,6 @@
 - [Python Versions](#python-versions)
 - [API Key](#api-key)
 - [Usage](#usage)
-  * [Sync (Normal) Usage](#sync--normal--usage)
-  * [Async Usage](#async-usage)
 - [Contributing](#contributing)
 
 # Installation
