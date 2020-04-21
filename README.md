@@ -9,7 +9,7 @@
 [![Say Thanks](https://img.shields.io/badge/SayThanks-!-1EAEDB.svg)](https://saythanks.io/to/bachya)
 
 `pyopenuv` is a simple Python library for retrieving UV-related information from
-[openuv.io](https://openuv.io/). It supports both sync and async use cases.
+[openuv.io](https://openuv.io/).
 
 - [Installation](#installation)
 - [Python Versions](#python-versions)
@@ -32,6 +32,7 @@ pip install pyopenuv
 * Python 3.6
 * Python 3.7
 * Python 3.8 
+
 # API Key
 
 You can get an API key from
@@ -39,52 +40,17 @@ You can get an API key from
 
 # Usage
 
-## Sync (Normal) Usage
-
-```python
-from pyopenuv import Client
-from pyopenuv.errors import OpenUvError
-
-API_KEY = "<OPENUV_API_KEY>"
-LATITUDE = 39.7974509
-LONGITUDE = -104.8887227
-ALTITUDE = 1609.3
-
-
-client = Client(API_KEY, LATITUDE, LONGITUDE, altitude=ALTITUDE)
-
-try:
-    # Get current UV info:
-    print(client.uv_index())
-
-    # Get forecasted UV info:
-    print(client.uv_forecast())
-
-    # Get UV protection window:
-    print(client.uv_protection_window())
-except OpenUvError as err:
-    print(f"There was an error: {err}")
-```
-
-## Async Usage
-
-To use the library in an `asyncio`-friendly way, simply pass the `use_async` parameter when
-creating a client. From there, the same methods can be used, but now as coroutines:
-
 ```python
 import asyncio
 
 from pyopenuv import Client
 from pyopenuv.errors import OpenUvError
 
-API_KEY = "<OPENUV_API_KEY>"
-LATITUDE = 39.7974509
-LONGITUDE = -104.8887227
-ALTITUDE = 1609.3
-
 
 async def main():
-    client = Client(API_KEY, LATITUDE, LONGITUDE, altitude=ALTITUDE, use_async=True)
+    client = Client(
+        "<OPENUV_API_KEY>", "<LATITUDE>", "<LONGITUDE>", altitude="<ALTITUDE>"
+    )
 
     try:
         # Get current UV info:
@@ -99,13 +65,12 @@ async def main():
         print(f"There was an error: {err}")
 
 
-asyncio.get_event_loop().run_until_complete(main())
+asyncio.run(main())
 ```
 
-By default, the `asyncio`-friendly method creates a new connection to OpenUV with each
-coroutine; this means that you won't get much in the way of runtime speed savings over
-the normal, sync API. If you are calling a large number of coroutines (or merely want to
-squeeze out every second of runtime savings possible), an
+By default, library creates a new connection to OpenUV with each coroutine; this means.
+If you are calling a large number of coroutines (or merely want to squeeze out every
+second of runtime savings possible), an
 [`aiohttp`](https://github.com/aio-libs/aiohttp) `ClientSession` can be used for connection
 pooling:
 
@@ -116,21 +81,15 @@ from aiohttp import ClientSession
 from pyopenuv import Client
 from pyopenuv.errors import OpenUvError
 
-API_KEY = "<OPENUV_API_KEY>"
-LATITUDE = 39.7974509
-LONGITUDE = -104.8887227
-ALTITUDE = 1609.3
-
 
 async def main():
     async with ClientSession() as session:
         client = Client(
-            API_KEY,
-            LATITUDE,
-            LONGITUDE,
-            altitude=ALTITUDE,
+            "<OPENUV_API_KEY>",
+            "<LATITUDE>",
+            "<LONGITUDE>",
+            altitude="<ALTITUDE>",
             session=session,
-            use_async=True,
         )
 
         try:
@@ -146,7 +105,7 @@ async def main():
             print(f"There was an error: {err}")
 
 
-asyncio.get_event_loop().run_until_complete(main())
+asyncio.run(main())
 ```
 
 Check out the `[examples/`](https://github.com/bachya/pyopenuv/tree/dev/examples)
