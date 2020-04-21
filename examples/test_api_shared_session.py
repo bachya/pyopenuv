@@ -22,12 +22,7 @@ async def main() -> None:
 
     async with ClientSession() as session:
         client = Client(
-            API_KEY,
-            LATITUDE,
-            LONGITUDE,
-            altitude=ALTITUDE,
-            session=session,
-            use_async=True,
+            API_KEY, LATITUDE, LONGITUDE, altitude=ALTITUDE, session=session,
         )
 
         start = time.time()
@@ -52,4 +47,4 @@ async def main() -> None:
     _LOGGER.info("Execution time: %s seconds", end - start)
 
 
-asyncio.get_event_loop().run_until_complete(main())
+asyncio.run(main())
