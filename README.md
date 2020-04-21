@@ -106,7 +106,7 @@ async def main():
 asyncio.run(main())
 ```
 
-Check out the `[examples/`](https://github.com/bachya/pyopenuv/tree/dev/examples)
+Check out the `[examples`](https://github.com/bachya/pyopenuv/tree/dev/examples)
 directory for more info.
 
 # Contributing
