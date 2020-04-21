@@ -1,7 +1,7 @@
 """Define a client to interact with openuv.io."""
 import asyncio
 import logging
-from typing import Awaitable, Optional
+from typing import Optional
 
 from aiohttp import ClientSession, ClientTimeout
 from aiohttp.client_exceptions import ClientError
@@ -17,16 +17,6 @@ DEFAULT_PROTECTION_LOW: float = 3.5
 DEFAULT_TIMEOUT = 30
 
 
-def _get_event_loop() -> asyncio.AbstractEventLoop:
-    """Retrieve the event loop or creates a new one."""
-    try:
-        return asyncio.get_event_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        return loop
-
-
 class Client:
     """Define the client."""
 
@@ -37,34 +27,14 @@ class Client:
         longitude: float,
         *,
         altitude: float = 0.0,
-        event_loop: Optional[asyncio.AbstractEventLoop] = None,
         session: Optional[ClientSession] = None,
-        use_async: bool = False,
     ) -> None:
         """Initialize."""
-        if session and not use_async:
-            raise ValueError(
-                "It doesn't make sense to use the session parameter without the "
-                "use_async parameter"
-            )
-
         self._api_key: str = api_key
-        self._loop: Optional[asyncio.AbstractEventLoop] = event_loop
         self._session: ClientSession = session
-        self._use_async = use_async
         self.altitude: str = str(altitude)
         self.latitude: str = str(latitude)
         self.longitude: str = str(longitude)
-
-    def _wrap_future(self, coro: Awaitable):
-        """Wrap a coroutine in a future and return or execute it."""
-        if not self._loop:
-            self._loop = _get_event_loop()
-
-        future = asyncio.ensure_future(coro, loop=self._loop)
-        if self._use_async:
-            return future
-        return self._loop.run_until_complete(future)
 
     async def async_request(
         self, method: str, endpoint: str, *, headers: dict = None, params: dict = None
@@ -106,20 +76,18 @@ class Client:
             if not use_running_session:
                 await session.close()
 
-    def uv_forecast(self) -> dict:
+    async def uv_forecast(self) -> dict:
         """Get forecasted UV data."""
-        return self._wrap_future(self.async_request("get", "forecast"))
+        return await self.async_request("get", "forecast")
 
-    def uv_index(self) -> dict:
+    async def uv_index(self) -> dict:
         """Get current UV data."""
-        return self._wrap_future(self.async_request("get", "uv"))
+        return await self.async_request("get", "uv")
 
-    def uv_protection_window(
+    async def uv_protection_window(
         self, low: float = DEFAULT_PROTECTION_LOW, high: float = DEFAULT_PROTECTION_HIGH
     ) -> dict:
         """Get data on when a UV protection window is."""
-        return self._wrap_future(
-            self.async_request(
-                "get", "protection", params={"from": str(low), "to": str(high)}
-            )
+        return await self.async_request(
+            "get", "protection", params={"from": str(low), "to": str(high)}
         )
