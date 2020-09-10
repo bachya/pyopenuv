@@ -19,7 +19,7 @@ use_parentheses = true
 
 [tool.poetry]
 name = "pyopenuv"
-version = "1.1.0"
+version = "2.0.0"
 description = "A simple Python API data from openuv.io"
 readme = "README.md"
 authors = ["Aaron Bach <bachya1208@gmail.com>"]
