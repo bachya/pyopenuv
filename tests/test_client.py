@@ -3,13 +3,13 @@
 import asyncio
 
 import aiohttp
-from asynctest import patch
 import pytest
 
 from pyopenuv import Client
 from pyopenuv.errors import InvalidApiKeyError, RequestError
 
-from .common import (
+from tests.async_mock import patch
+from tests.common import (
     TEST_ALTITUDE,
     TEST_API_KEY,
     TEST_LATITUDE,
