@@ -1,5 +1,4 @@
 """Define tests for the client object."""
-# pylint: disable=protected-access
 import asyncio
 
 import aiohttp
@@ -17,8 +16,9 @@ from tests.common import (
     load_fixture,
 )
 
+pytestmark = pytest.mark.asyncio
 
-@pytest.mark.asyncio
+
 async def test_bad_api_key(aresponses):
     """Test the that the proper exception is raised with a bad API key."""
     aresponses.add(
@@ -36,11 +36,13 @@ async def test_bad_api_key(aresponses):
                 TEST_LONGITUDE,
                 altitude=TEST_ALTITUDE,
                 session=session,
+                # Ensure the retry logic doesn't slow this test down:
+                request_retries=1,
+                request_retry_interval=0,
             )
             await client.uv_protection_window()
 
 
-@pytest.mark.asyncio
 async def test_bad_request(aresponses):
     """Test that the proper exception is raised during a bad request."""
     aresponses.add(
@@ -58,11 +60,13 @@ async def test_bad_request(aresponses):
                 TEST_LONGITUDE,
                 altitude=TEST_ALTITUDE,
                 session=session,
+                # Ensure the retry logic doesn't slow this test down:
+                request_retries=1,
+                request_retry_interval=0,
             )
             await client.async_request("get", "bad_endpoint")
 
 
-@pytest.mark.asyncio
 async def test_protection_window(aresponses):
     """Test successfully retrieving the protection window."""
     aresponses.add(
@@ -88,9 +92,27 @@ async def test_protection_window(aresponses):
         assert data["result"]["from_uv"] == 3.2509
 
 
-@pytest.mark.asyncio
-async def test_timeout():
-    """Test that a timeout raises an exception."""
+async def test_request_retries(aresponses):
+    """Test that the retry logic is successful."""
+    aresponses.add(
+        "api.openuv.io",
+        "/api/v1/uv",
+        "get",
+        aresponses.Response(
+            text="Not Found", status=404, headers={"Content-Type": "application/json"},
+        ),
+    )
+    aresponses.add(
+        "api.openuv.io",
+        "/api/v1/uv",
+        "get",
+        aresponses.Response(
+            text=load_fixture("uv_index_response.json"),
+            status=200,
+            headers={"Content-Type": "application/json"},
+        ),
+    )
+
     async with aiohttp.ClientSession() as session:
         client = Client(
             TEST_API_KEY,
@@ -98,14 +120,13 @@ async def test_timeout():
             TEST_LONGITUDE,
             altitude=TEST_ALTITUDE,
             session=session,
+            # Ensure the retry logic doesn't slow this test down:
+            request_retry_interval=0,
         )
-
-        with patch("aiohttp.ClientSession.request", side_effect=asyncio.TimeoutError):
-            with pytest.raises(RequestError):
-                await client.uv_forecast()
+        data = await client.uv_index()
+        assert data["result"]["uv"] == 8.2342
 
 
-@pytest.mark.asyncio
 async def test_session_from_scratch(aresponses):
     """Test that an aiohttp ClientSession is created on the fly if needed."""
     aresponses.add(
@@ -124,7 +145,25 @@ async def test_session_from_scratch(aresponses):
     assert len(data["result"]) == 2
 
 
-@pytest.mark.asyncio
+async def test_timeout():
+    """Test that a timeout raises an exception."""
+    async with aiohttp.ClientSession() as session:
+        client = Client(
+            TEST_API_KEY,
+            TEST_LATITUDE,
+            TEST_LONGITUDE,
+            altitude=TEST_ALTITUDE,
+            session=session,
+            # Ensure the retry logic doesn't slow this test down:
+            request_retries=1,
+            request_retry_interval=0,
+        )
+
+        with patch("aiohttp.ClientSession.request", side_effect=asyncio.TimeoutError):
+            with pytest.raises(RequestError):
+                await client.uv_forecast()
+
+
 async def test_uv_forecast(aresponses):
     """Test successfully retrieving UV forecast info."""
     aresponses.add(
@@ -150,7 +189,6 @@ async def test_uv_forecast(aresponses):
         assert len(data["result"]) == 2
 
 
-@pytest.mark.asyncio
 async def test_uv_index_async(aresponses):
     """Test successfully retrieving UV index info (async)."""
     aresponses.add(
