@@ -42,6 +42,7 @@ class Client:
         self.latitude = str(latitude)
         self.longitude = str(longitude)
 
+        # Implement a version of the request coroutine, but with backoff/retry logic:
         self.async_request = backoff.on_exception(
             backoff.constant,
             (asyncio.TimeoutError, ClientError),
@@ -85,7 +86,7 @@ class Client:
         return cast(Dict[str, Any], data)
 
     def _handle_on_giveup(self, _: Dict[str, Any]) -> None:
-        """Determine how to raise on giveup."""
+        """Determine what exception to raise upon giveup."""
         err_info = sys.exc_info()
         err = err_info[1].with_traceback(err_info[2])  # type: ignore
 
@@ -95,7 +96,7 @@ class Client:
 
     @staticmethod
     def _is_unauthorized_exception(err: BaseException) -> bool:
-        """Determine whether the retry sequence should give up."""
+        """Return whether an exception represents an unauthorized error."""
         return isinstance(err, ClientError) and any(
             code in str(err) for code in ("401", "403")
         )
