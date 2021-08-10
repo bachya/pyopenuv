@@ -84,13 +84,6 @@ class Client:
 
         return cast(Dict[str, Any], data)
 
-    @staticmethod
-    def _is_unauthorized_exception(err: BaseException) -> bool:
-        """Determine whether the retry sequence should give up."""
-        return isinstance(err, ClientError) and any(
-            code in str(err) for code in ("401", "403")
-        )
-
     def _handle_on_giveup(self, _: Dict[str, Any]) -> None:
         """Determine how to raise on giveup."""
         err_info = sys.exc_info()
@@ -99,6 +92,13 @@ class Client:
         if self._is_unauthorized_exception(err):
             raise InvalidApiKeyError("Invalid API key") from err
         raise RequestError(err) from err
+
+    @staticmethod
+    def _is_unauthorized_exception(err: BaseException) -> bool:
+        """Determine whether the retry sequence should give up."""
+        return isinstance(err, ClientError) and any(
+            code in str(err) for code in ("401", "403")
+        )
 
     async def uv_forecast(self) -> Dict[str, Any]:
         """Get forecasted UV data."""
