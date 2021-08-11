@@ -83,6 +83,8 @@ class Client:
         if not use_running_session:
             await session.close()
 
+        _LOGGER.debug("Received data for %s: %s", endpoint, data)
+
         return cast(Dict[str, Any], data)
 
     def _handle_on_giveup(self, _: Dict[str, Any]) -> None:
