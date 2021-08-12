@@ -36,9 +36,7 @@ async def test_bad_api_key(aresponses):
                 TEST_LONGITUDE,
                 altitude=TEST_ALTITUDE,
                 session=session,
-                # Ensure the retry logic doesn't slow this test down:
                 request_retries=1,
-                request_retry_interval=0,
             )
             await client.uv_protection_window()
 
@@ -60,9 +58,7 @@ async def test_bad_request(aresponses):
                 TEST_LONGITUDE,
                 altitude=TEST_ALTITUDE,
                 session=session,
-                # Ensure the retry logic doesn't slow this test down:
                 request_retries=1,
-                request_retry_interval=0,
             )
             await client.async_request("get", "bad_endpoint")
 
@@ -120,8 +116,6 @@ async def test_request_retries(aresponses):
             TEST_LONGITUDE,
             altitude=TEST_ALTITUDE,
             session=session,
-            # Ensure the retry logic doesn't slow this test down:
-            request_retry_interval=0,
         )
         data = await client.uv_index()
         assert data["result"]["uv"] == 8.2342
@@ -154,9 +148,7 @@ async def test_timeout():
             TEST_LONGITUDE,
             altitude=TEST_ALTITUDE,
             session=session,
-            # Ensure the retry logic doesn't slow this test down:
             request_retries=1,
-            request_retry_interval=0,
         )
 
         with patch("aiohttp.ClientSession.request", side_effect=asyncio.TimeoutError):

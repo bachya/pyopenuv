@@ -16,8 +16,7 @@ API_URL_SCAFFOLD = "https://api.openuv.io/api/v1"
 
 DEFAULT_PROTECTION_HIGH = 3.5
 DEFAULT_PROTECTION_LOW = 3.5
-DEFAULT_REQUEST_RETRIES = 3
-DEFAULT_REQUEST_RETRY_INTERVAL = 3
+DEFAULT_REQUEST_RETRIES = 4
 DEFAULT_TIMEOUT = 30
 
 
@@ -33,7 +32,6 @@ class Client:
         altitude: float = 0.0,
         session: Optional[ClientSession] = None,
         request_retries: int = DEFAULT_REQUEST_RETRIES,
-        request_retry_interval: int = DEFAULT_REQUEST_RETRY_INTERVAL,
     ) -> None:
         """Initialize."""
         self._api_key = api_key
@@ -44,10 +42,9 @@ class Client:
 
         # Implement a version of the request coroutine, but with backoff/retry logic:
         self.async_request = backoff.on_exception(
-            backoff.constant,
+            backoff.expo,
             (asyncio.TimeoutError, ClientError),
             giveup=self._is_unauthorized_exception,
-            interval=request_retry_interval,
             logger=_LOGGER,
             max_tries=request_retries,
             on_giveup=self._handle_on_giveup,
