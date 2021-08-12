@@ -69,9 +69,9 @@ asyncio.run(main())
 
 ## Retries
 
-By default, `pyopenuv` will retry appropriate errors 3 times (with an interval of 3 seconds
-in-between). This logic can be changed by passing different values for `request_retries`
-and `request_retry_interval` to the `Client` constructor:
+By default, `pyopenuv` will retry appropriate errors 4 times (with an exponentially
+increasing delay in-between). This logic can be changed by passing a different value for
+`request_retries` to the `Client` constructor:
 
 ```python
 import asyncio
@@ -87,7 +87,6 @@ async def main():
         "<LONGITUDE>",
         altitude="<ALTITUDE>",
         request_retries=5,
-        request_retry_interval=10,
     )
 
     # ...
