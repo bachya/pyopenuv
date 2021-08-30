@@ -39,7 +39,7 @@ warn_unused_ignores = true
 
 [tool.poetry]
 name = "pyopenuv"
-version = "2.1.0"
+version = "2.2.0"
 description = "A simple Python API data from openuv.io"
 readme = "README.md"
 authors = ["Aaron Bach <bachya1208@gmail.com>"]
