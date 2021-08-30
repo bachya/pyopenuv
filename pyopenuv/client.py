@@ -32,6 +32,7 @@ class Client:
         altitude: float = 0.0,
         session: Optional[ClientSession] = None,
         request_retries: int = DEFAULT_REQUEST_RETRIES,
+        logger: Optional[logging.Logger] = None,
     ) -> None:
         """Initialize."""
         self._api_key = api_key
@@ -40,11 +41,16 @@ class Client:
         self.latitude = str(latitude)
         self.longitude = str(longitude)
 
+        if logger:
+            self._logger = logger
+        else:
+            self._logger = _LOGGER
+
         # Implement a version of the request coroutine, but with backoff/retry logic:
         self.async_request = backoff.on_exception(
             backoff.expo,
             (asyncio.TimeoutError, ClientError),
-            logger=_LOGGER,
+            logger=self._logger,
             max_tries=request_retries,
             on_giveup=self._handle_on_giveup,
         )(self._async_request)
@@ -79,7 +85,7 @@ class Client:
         if not use_running_session:
             await session.close()
 
-        _LOGGER.debug("Received data for %s: %s", endpoint, data)
+        self._logger.debug("Received data for %s: %s", endpoint, data)
 
         return cast(Dict[str, Any], data)
 
