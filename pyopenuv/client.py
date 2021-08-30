@@ -44,7 +44,6 @@ class Client:
         self.async_request = backoff.on_exception(
             backoff.expo,
             (asyncio.TimeoutError, ClientError),
-            giveup=self._is_unauthorized_exception,
             logger=_LOGGER,
             max_tries=request_retries,
             on_giveup=self._handle_on_giveup,
