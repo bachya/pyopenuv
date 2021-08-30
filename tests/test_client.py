@@ -1,5 +1,6 @@
 """Define tests for the client object."""
 import asyncio
+import logging
 
 import aiohttp
 import pytest
@@ -61,6 +62,38 @@ async def test_bad_request(aresponses):
                 request_retries=1,
             )
             await client.async_request("get", "bad_endpoint")
+
+
+async def test_custom_logger(aresponses, caplog):
+    """Test that a custom logger is used when provided to the client."""
+    caplog.set_level(logging.DEBUG)
+    custom_logger = logging.getLogger("custom")
+
+    aresponses.add(
+        "api.openuv.io",
+        "/api/v1/protection",
+        "get",
+        aresponses.Response(
+            text=load_fixture("protection_window_response.json"),
+            status=200,
+            headers={"Content-Type": "application/json"},
+        ),
+    )
+
+    async with aiohttp.ClientSession() as session:
+        client = Client(
+            TEST_API_KEY,
+            TEST_LATITUDE,
+            TEST_LONGITUDE,
+            altitude=TEST_ALTITUDE,
+            session=session,
+            logger=custom_logger,
+        )
+        await client.uv_protection_window()
+        assert any(
+            record.name == "custom" and "Received data" in record.message
+            for record in caplog.records
+        )
 
 
 async def test_protection_window(aresponses):
