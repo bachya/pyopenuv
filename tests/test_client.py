@@ -95,7 +95,9 @@ async def test_request_retries(aresponses):
         "/api/v1/uv",
         "get",
         aresponses.Response(
-            text="Not Found", status=404, headers={"Content-Type": "application/json"},
+            text="Not Found",
+            status=404,
+            headers={"Content-Type": "application/json"},
         ),
     )
     aresponses.add(
