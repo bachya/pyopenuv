@@ -20,7 +20,7 @@ DEFAULT_REQUEST_RETRIES = 10
 DEFAULT_TIMEOUT = 30
 
 
-class Client:
+class Client:  # pylint: disable=too-many-instance-attributes
     """Define the client."""
 
     def __init__(
