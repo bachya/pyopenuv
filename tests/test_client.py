@@ -41,6 +41,8 @@ async def test_bad_api_key(aresponses):
             )
             await client.uv_protection_window()
 
+    aresponses.assert_plan_strictly_followed()
+
 
 async def test_bad_request(aresponses):
     """Test that the proper exception is raised during a bad request."""
@@ -62,6 +64,8 @@ async def test_bad_request(aresponses):
                 request_retries=1,
             )
             await client.async_request("get", "bad_endpoint")
+
+    aresponses.assert_plan_strictly_followed()
 
 
 async def test_custom_logger(aresponses, caplog):
@@ -95,6 +99,8 @@ async def test_custom_logger(aresponses, caplog):
             for record in caplog.records
         )
 
+    aresponses.assert_plan_strictly_followed()
+
 
 async def test_protection_window(aresponses):
     """Test successfully retrieving the protection window."""
@@ -120,9 +126,21 @@ async def test_protection_window(aresponses):
         data = await client.uv_protection_window()
         assert data["result"]["from_uv"] == 3.2509
 
+    aresponses.assert_plan_strictly_followed()
+
 
 async def test_request_retries(aresponses):
-    """Test that the retry logic is successful."""
+    """Test the request retry logic."""
+    aresponses.add(
+        "api.openuv.io",
+        "/api/v1/uv",
+        "get",
+        aresponses.Response(
+            text="Not Found",
+            status=404,
+            headers={"Content-Type": "application/json"},
+        ),
+    )
     aresponses.add(
         "api.openuv.io",
         "/api/v1/uv",
@@ -152,8 +170,18 @@ async def test_request_retries(aresponses):
             altitude=TEST_ALTITUDE,
             session=session,
         )
+
+        client.disable_request_retries()
+
+        with pytest.raises(RequestError):
+            await client.uv_index()
+
+        client.enable_request_retries()
+
         data = await client.uv_index()
         assert data["result"]["uv"] == 8.2342
+
+    aresponses.assert_plan_strictly_followed()
 
 
 async def test_session_from_scratch(aresponses):
@@ -172,6 +200,8 @@ async def test_session_from_scratch(aresponses):
     client = Client(TEST_API_KEY, TEST_LATITUDE, TEST_LONGITUDE, altitude=TEST_ALTITUDE)
     data = await client.uv_forecast()
     assert len(data["result"]) == 2
+
+    aresponses.assert_plan_strictly_followed()
 
 
 async def test_timeout():
@@ -215,6 +245,8 @@ async def test_uv_forecast(aresponses):
         data = await client.uv_forecast()
         assert len(data["result"]) == 2
 
+    aresponses.assert_plan_strictly_followed()
+
 
 async def test_uv_index_async(aresponses):
     """Test successfully retrieving UV index info (async)."""
@@ -239,3 +271,5 @@ async def test_uv_index_async(aresponses):
         )
         data = await client.uv_index()
         assert data["result"]["uv"] == 8.2342
+
+    aresponses.assert_plan_strictly_followed()

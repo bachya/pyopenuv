@@ -2,7 +2,7 @@
 import asyncio
 import logging
 import sys
-from typing import Any, Dict, Optional, cast
+from typing import Any, Callable, Dict, Optional, cast
 
 from aiohttp import ClientSession, ClientTimeout
 from aiohttp.client_exceptions import ClientError
@@ -20,7 +20,7 @@ DEFAULT_REQUEST_RETRIES = 10
 DEFAULT_TIMEOUT = 30
 
 
-class Client:
+class Client:  # pylint: disable=too-many-instance-attributes
     """Define the client."""
 
     def __init__(
@@ -36,6 +36,7 @@ class Client:
     ) -> None:
         """Initialize."""
         self._api_key = api_key
+        self._request_retries = request_retries
         self._session = session
         self.altitude = str(altitude)
         self.latitude = str(latitude)
@@ -46,14 +47,7 @@ class Client:
         else:
             self._logger = _LOGGER
 
-        # Implement a version of the request coroutine, but with backoff/retry logic:
-        self.async_request = backoff.on_exception(
-            backoff.expo,
-            (asyncio.TimeoutError, ClientError),
-            logger=self._logger,
-            max_tries=request_retries,
-            on_giveup=self._handle_on_giveup,
-        )(self._async_request)
+        self.async_request = self._wrap_request_method(self._request_retries)
 
     async def _async_request(
         self, method: str, endpoint: str, **kwargs: Dict[str, str]
@@ -104,6 +98,24 @@ class Client:
         return isinstance(err, ClientError) and any(
             code in str(err) for code in ("401", "403")
         )
+
+    def _wrap_request_method(self, request_retries: int) -> Callable:
+        """Wrap the request method in backoff/retry logic."""
+        return backoff.on_exception(
+            backoff.expo,
+            (asyncio.TimeoutError, ClientError),
+            logger=self._logger,
+            max_tries=request_retries,
+            on_giveup=self._handle_on_giveup,
+        )(self._async_request)
+
+    def disable_request_retries(self) -> None:
+        """Disable the request retry mechanism."""
+        self.async_request = self._wrap_request_method(1)
+
+    def enable_request_retries(self) -> None:
+        """Enable the request retry mechanism."""
+        self.async_request = self._wrap_request_method(self._request_retries)
 
     async def uv_forecast(self) -> Dict[str, Any]:
         """Get forecasted UV data."""
