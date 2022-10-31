@@ -1,27 +1,27 @@
 """Define tests for the client object."""
+from __future__ import annotations
+
 import asyncio
 import logging
+from typing import Any
+from unittest.mock import Mock, patch
 
 import aiohttp
 import pytest
+from aresponses import ResponsesMockServer
 
 from pyopenuv import Client
 from pyopenuv.errors import InvalidApiKeyError, RequestError
-
-from tests.async_mock import patch
-from tests.common import (
-    TEST_ALTITUDE,
-    TEST_API_KEY,
-    TEST_LATITUDE,
-    TEST_LONGITUDE,
-    load_fixture,
-)
-
-pytestmark = pytest.mark.asyncio
+from tests.common import TEST_ALTITUDE, TEST_API_KEY, TEST_LATITUDE, TEST_LONGITUDE
 
 
-async def test_bad_api_key(aresponses):
-    """Test the that the proper exception is raised with a bad API key."""
+@pytest.mark.asyncio
+async def test_bad_api_key(aresponses: ResponsesMockServer) -> None:
+    """Test the that the proper exception is raised with a bad API key.
+
+    Args:
+        aresponses: An aresponses server.
+    """
     aresponses.add(
         "api.openuv.io",
         "/api/v1/protection",
@@ -44,8 +44,13 @@ async def test_bad_api_key(aresponses):
     aresponses.assert_plan_strictly_followed()
 
 
-async def test_bad_request(aresponses):
-    """Test that the proper exception is raised during a bad request."""
+@pytest.mark.asyncio
+async def test_bad_request(aresponses: ResponsesMockServer) -> None:
+    """Test that the proper exception is raised during a bad request.
+
+    Args:
+        aresponses: An aresponses server.
+    """
     aresponses.add(
         "api.openuv.io",
         "/api/v1/bad_endpoint",
@@ -68,8 +73,19 @@ async def test_bad_request(aresponses):
     aresponses.assert_plan_strictly_followed()
 
 
-async def test_custom_logger(aresponses, caplog):
-    """Test that a custom logger is used when provided to the client."""
+@pytest.mark.asyncio
+async def test_custom_logger(
+    aresponses: ResponsesMockServer,
+    caplog: Mock,
+    protection_window_response: dict[str, Any],
+) -> None:
+    """Test that a custom logger is used when provided to the client.
+
+    Args:
+        aresponses: An aresponses server.
+        caplog: A mock logging utility.
+        protection_window_response: An API response payload.
+    """
     caplog.set_level(logging.DEBUG)
     custom_logger = logging.getLogger("custom")
 
@@ -77,10 +93,8 @@ async def test_custom_logger(aresponses, caplog):
         "api.openuv.io",
         "/api/v1/protection",
         "get",
-        aresponses.Response(
-            text=load_fixture("protection_window_response.json"),
-            status=200,
-            headers={"Content-Type": "application/json"},
+        response=aiohttp.web_response.json_response(
+            protection_window_response, status=200
         ),
     )
 
@@ -102,16 +116,22 @@ async def test_custom_logger(aresponses, caplog):
     aresponses.assert_plan_strictly_followed()
 
 
-async def test_protection_window(aresponses):
-    """Test successfully retrieving the protection window."""
+@pytest.mark.asyncio
+async def test_protection_window(
+    aresponses: ResponsesMockServer, protection_window_response: dict[str, Any]
+) -> None:
+    """Test successfully retrieving the protection window.
+
+    Args:
+        aresponses: An aresponses server.
+        protection_window_response: An API response payload.
+    """
     aresponses.add(
         "api.openuv.io",
         "/api/v1/protection",
         "get",
-        aresponses.Response(
-            text=load_fixture("protection_window_response.json"),
-            status=200,
-            headers={"Content-Type": "application/json"},
+        response=aiohttp.web_response.json_response(
+            protection_window_response, status=200
         ),
     )
 
@@ -129,8 +149,16 @@ async def test_protection_window(aresponses):
     aresponses.assert_plan_strictly_followed()
 
 
-async def test_request_retries(aresponses):
-    """Test the request retry logic."""
+@pytest.mark.asyncio
+async def test_request_retries(
+    aresponses: ResponsesMockServer, uv_index_response: dict[str, Any]
+) -> None:
+    """Test the request retry logic.
+
+    Args:
+        aresponses: An aresponses server.
+        uv_index_response: An API response payload.
+    """
     aresponses.add(
         "api.openuv.io",
         "/api/v1/uv",
@@ -155,11 +183,7 @@ async def test_request_retries(aresponses):
         "api.openuv.io",
         "/api/v1/uv",
         "get",
-        aresponses.Response(
-            text=load_fixture("uv_index_response.json"),
-            status=200,
-            headers={"Content-Type": "application/json"},
-        ),
+        response=aiohttp.web_response.json_response(uv_index_response, status=200),
     )
 
     async with aiohttp.ClientSession() as session:
@@ -184,17 +208,21 @@ async def test_request_retries(aresponses):
     aresponses.assert_plan_strictly_followed()
 
 
-async def test_session_from_scratch(aresponses):
-    """Test that an aiohttp ClientSession is created on the fly if needed."""
+@pytest.mark.asyncio
+async def test_session_from_scratch(
+    aresponses: ResponsesMockServer, uv_forecast_response: dict[str, Any]
+) -> None:
+    """Test that an aiohttp ClientSession is created on the fly if needed.
+
+    Args:
+        aresponses: An aresponses server.
+        uv_forecast_response: An API response payload.
+    """
     aresponses.add(
         "api.openuv.io",
         "/api/v1/forecast",
         "get",
-        aresponses.Response(
-            text=load_fixture("uv_forecast_response.json"),
-            status=200,
-            headers={"Content-Type": "application/json"},
-        ),
+        response=aiohttp.web_response.json_response(uv_forecast_response, status=200),
     )
 
     client = Client(TEST_API_KEY, TEST_LATITUDE, TEST_LONGITUDE, altitude=TEST_ALTITUDE)
@@ -204,7 +232,8 @@ async def test_session_from_scratch(aresponses):
     aresponses.assert_plan_strictly_followed()
 
 
-async def test_timeout():
+@pytest.mark.asyncio
+async def test_timeout() -> None:
     """Test that a timeout raises an exception."""
     async with aiohttp.ClientSession() as session:
         client = Client(
@@ -216,22 +245,27 @@ async def test_timeout():
             request_retries=1,
         )
 
-        with patch("aiohttp.ClientSession.request", side_effect=asyncio.TimeoutError):
-            with pytest.raises(RequestError):
-                await client.uv_forecast()
+        with patch(
+            "aiohttp.ClientSession.request", side_effect=asyncio.TimeoutError
+        ), pytest.raises(RequestError):
+            await client.uv_forecast()
 
 
-async def test_uv_forecast(aresponses):
-    """Test successfully retrieving UV forecast info."""
+@pytest.mark.asyncio
+async def test_uv_forecast(
+    aresponses: ResponsesMockServer, uv_forecast_response: dict[str, Any]
+) -> None:
+    """Test successfully retrieving UV forecast info.
+
+    Args:
+        aresponses: An aresponses server.
+        uv_forecast_response: An API response payload.
+    """
     aresponses.add(
         "api.openuv.io",
         "/api/v1/forecast",
         "get",
-        aresponses.Response(
-            text=load_fixture("uv_forecast_response.json"),
-            status=200,
-            headers={"Content-Type": "application/json"},
-        ),
+        response=aiohttp.web_response.json_response(uv_forecast_response, status=200),
     )
 
     async with aiohttp.ClientSession() as session:
@@ -248,17 +282,21 @@ async def test_uv_forecast(aresponses):
     aresponses.assert_plan_strictly_followed()
 
 
-async def test_uv_index_async(aresponses):
-    """Test successfully retrieving UV index info (async)."""
+@pytest.mark.asyncio
+async def test_uv_index_async(
+    aresponses: ResponsesMockServer, uv_index_response: dict[str, Any]
+) -> None:
+    """Test successfully retrieving UV index info (async).
+
+    Args:
+        aresponses: An aresponses server.
+        uv_index_response: An API response payload.
+    """
     aresponses.add(
         "api.openuv.io",
         "/api/v1/uv",
         "get",
-        aresponses.Response(
-            text=load_fixture("uv_index_response.json"),
-            status=200,
-            headers={"Content-Type": "application/json"},
-        ),
+        response=aiohttp.web_response.json_response(uv_index_response, status=200),
     )
 
     async with aiohttp.ClientSession() as session:

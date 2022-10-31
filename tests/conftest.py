@@ -1,0 +1,41 @@
+"""Define dynamic text fixtures."""
+from __future__ import annotations
+
+import json
+from typing import Any, cast
+
+import pytest
+
+from .common import load_fixture
+
+
+@pytest.fixture(name="protection_window_response", scope="session")
+def protection_window_response_fixture() -> dict[str, Any]:
+    """Define a fixture to return an protection window response.
+
+    Returns:
+        An API response payload.
+    """
+    return cast(
+        dict[str, Any], json.loads(load_fixture("protection_window_response.json"))
+    )
+
+
+@pytest.fixture(name="uv_forecast_response", scope="session")
+def uv_forecast_response_fixture() -> dict[str, Any]:
+    """Define a fixture to return an UV forecast response.
+
+    Returns:
+        An API response payload.
+    """
+    return cast(dict[str, Any], json.loads(load_fixture("uv_forecast_response.json")))
+
+
+@pytest.fixture(name="uv_index_response", scope="session")
+def uv_index_response_fixture() -> dict[str, Any]:
+    """Define a fixture to return an UV index response.
+
+    Returns:
+        An API response payload.
+    """
+    return cast(dict[str, Any], json.loads(load_fixture("uv_index_response.json")))

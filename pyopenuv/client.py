@@ -1,16 +1,18 @@
 """Define a client to interact with openuv.io."""
+from __future__ import annotations
+
 import asyncio
 import logging
 import sys
-from typing import Any, Awaitable, Callable, Dict, Optional, cast
+from collections.abc import Awaitable, Callable
+from typing import Any, cast
 
+import backoff
 from aiohttp import ClientSession, ClientTimeout
 from aiohttp.client_exceptions import ClientError
-import backoff
 
+from .const import LOGGER
 from .errors import InvalidApiKeyError, RequestError
-
-_LOGGER = logging.getLogger(__name__)
 
 API_URL_SCAFFOLD = "https://api.openuv.io/api/v1"
 
@@ -20,7 +22,7 @@ DEFAULT_REQUEST_RETRIES = 10
 DEFAULT_TIMEOUT = 30
 
 
-class Client:  # pylint: disable=too-many-instance-attributes
+class Client:
     """Define the client."""
 
     def __init__(
@@ -30,11 +32,21 @@ class Client:  # pylint: disable=too-many-instance-attributes
         longitude: float,
         *,
         altitude: float = 0.0,
-        session: Optional[ClientSession] = None,
+        logger: logging.Logger | None = None,
         request_retries: int = DEFAULT_REQUEST_RETRIES,
-        logger: Optional[logging.Logger] = None,
+        session: ClientSession | None = None,
     ) -> None:
-        """Initialize."""
+        """Initialize.
+
+        Args:
+            api_key: An OpenUV API key.
+            latitude: A latitude.
+            longitude: A longitude.
+            altitude: An altitude.
+            logger: An optional logger.
+            request_retries: The number of retries for a failed request.
+            session: An optional aiohttp ClientSession.
+        """
         self._api_key = api_key
         self._request_retries = request_retries
         self._session = session
@@ -45,14 +57,23 @@ class Client:  # pylint: disable=too-many-instance-attributes
         if logger:
             self._logger = logger
         else:
-            self._logger = _LOGGER
+            self._logger = LOGGER
 
         self.async_request = self._wrap_request_method(self._request_retries)
 
     async def _async_request(
-        self, method: str, endpoint: str, **kwargs: Dict[str, str]
-    ) -> Dict[str, Any]:
-        """Make a request against OpenUV."""
+        self, method: str, endpoint: str, **kwargs: dict[str, str]
+    ) -> dict[str, Any]:
+        """Make an API request.
+
+        Args:
+            method: An HTTP method.
+            endpoint: A relative API endpoint.
+            **kwargs: Additional kwargs to send with the request.
+
+        Returns:
+            An API response payload.
+        """
         kwargs.setdefault("headers", {})
         kwargs["headers"]["x-access-token"] = self._api_key
 
@@ -61,14 +82,10 @@ class Client:  # pylint: disable=too-many-instance-attributes
         kwargs["params"]["lng"] = self.longitude
         kwargs["params"]["alt"] = self.altitude
 
-        use_running_session = self._session and not self._session.closed
-
-        if use_running_session:
+        if use_running_session := self._session and not self._session.closed:
             session = self._session
         else:
             session = ClientSession(timeout=ClientTimeout(total=DEFAULT_TIMEOUT))
-
-        assert session
 
         async with session.request(
             method, f"{API_URL_SCAFFOLD}/{endpoint}", **kwargs
@@ -81,12 +98,17 @@ class Client:  # pylint: disable=too-many-instance-attributes
 
         self._logger.debug("Received data for %s: %s", endpoint, data)
 
-        return cast(Dict[str, Any], data)
+        return cast(dict[str, Any], data)
 
-    def _handle_on_giveup(self, _: Dict[str, Any]) -> None:
-        """Determine what exception to raise upon giveup."""
+    def _handle_on_giveup(self, _: dict[str, Any]) -> None:
+        """Determine what exception to raise upon giveup.
+
+        Raises:
+            InvalidApiKeyError: Raised upon an invalid OpenUV API key.
+            RequestError: Raised upon an underlying HTTP error.
+        """
         err_info = sys.exc_info()
-        err = err_info[1].with_traceback(err_info[2])  # type: ignore
+        err = err_info[1].with_traceback(err_info[2])  # type: ignore[union-attr]
 
         if self._is_unauthorized_exception(err):
             raise InvalidApiKeyError("Invalid API key") from err
@@ -94,21 +116,37 @@ class Client:  # pylint: disable=too-many-instance-attributes
 
     @staticmethod
     def _is_unauthorized_exception(err: BaseException) -> bool:
-        """Return whether an exception represents an unauthorized error."""
+        """Return whether an exception represents an unauthorized error.
+
+        Args:
+            err: Any BaseException subclass.
+
+        Returns:
+            Whether the exception indicates an authorization error.
+        """
         return isinstance(err, ClientError) and any(
             code in str(err) for code in ("401", "403")
         )
 
-    def _wrap_request_method(self, request_retries: int) -> Callable:
-        """Wrap the request method in backoff/retry logic."""
+    def _wrap_request_method(
+        self, request_retries: int
+    ) -> Callable[..., Awaitable[dict[str, Any]]]:
+        """Wrap the request method in backoff/retry logic.
+
+        Args:
+            request_retries: The number of retries to give a failed request.
+
+        Returns:
+            A version of the request callable that can do retries.
+        """
         return cast(
-            Callable[..., Awaitable[Dict[str, Any]]],
+            Callable[..., Awaitable[dict[str, Any]]],
             backoff.on_exception(
                 backoff.expo,
                 (asyncio.TimeoutError, ClientError),
                 logger=self._logger,
                 max_tries=request_retries,
-                on_giveup=self._handle_on_giveup,
+                on_giveup=self._handle_on_giveup,  # type: ignore[arg-type]
             )(self._async_request),
         )
 
@@ -120,21 +158,34 @@ class Client:  # pylint: disable=too-many-instance-attributes
         """Enable the request retry mechanism."""
         self.async_request = self._wrap_request_method(self._request_retries)
 
-    async def uv_forecast(self) -> Dict[str, Any]:
-        """Get forecasted UV data."""
-        data = await self.async_request("get", "forecast")
-        return cast(Dict[str, Any], data)
+    async def uv_forecast(self) -> dict[str, Any]:
+        """Get forecasted UV data.
 
-    async def uv_index(self) -> Dict[str, Any]:
-        """Get current UV data."""
-        data = await self.async_request("get", "uv")
-        return cast(Dict[str, Any], data)
+        Returns:
+            An API response payload.
+        """
+        return await self.async_request("get", "forecast")
+
+    async def uv_index(self) -> dict[str, Any]:
+        """Get current UV data.
+
+        Returns:
+            An API response payload.
+        """
+        return await self.async_request("get", "uv")
 
     async def uv_protection_window(
         self, low: float = DEFAULT_PROTECTION_LOW, high: float = DEFAULT_PROTECTION_HIGH
-    ) -> Dict[str, Any]:
-        """Get data on when a UV protection window is."""
-        data = await self.async_request(
+    ) -> dict[str, Any]:
+        """Get data on when a UV protection window is.
+
+        Args:
+            low: The low end of the UV index to monitor.
+            high: The high end of the UV index to monitor.
+
+        Returns:
+            An API response payload.
+        """
+        return await self.async_request(
             "get", "protection", params={"from": str(low), "to": str(high)}
         )
-        return cast(Dict[str, Any], data)
