@@ -22,7 +22,11 @@ async def main() -> None:
 
     async with ClientSession() as session:
         client = Client(
-            API_KEY, LATITUDE, LONGITUDE, altitude=ALTITUDE, session=session,
+            API_KEY,
+            LATITUDE,
+            LONGITUDE,
+            altitude=ALTITUDE,
+            session=session,
         )
 
         start = time.time()
