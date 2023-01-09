@@ -53,7 +53,7 @@ async def main():
     try:
         # Get the current status of the OpenUV API:
         print(await client.api_status())
-        # >>> {"status": true}
+        # >>> True
 
         # Get current UV info:
         print(await client.uv_index())
@@ -66,6 +66,39 @@ async def main():
         # Get UV protection window:
         print(await client.uv_protection_window())
         # >>> { "result": { ... } }
+    except OpenUvError as err:
+        print(f"There was an error: {err}")
+
+
+asyncio.run(main())
+```
+
+## Checking API Status Before Requests
+
+If you would prefer to not call `api_status` manually, you can configure the `Client` object
+to automatically check the status of the OpenUV API before executing any of the API
+methods—simply pass the `check_status_before_request` parameter:
+
+```python
+import asyncio
+
+from pyopenuv import Client
+from pyopenuv.errors import ApiUnavailableError, OpenUvError
+
+
+async def main():
+    client = Client(
+        "<OPENUV_API_KEY>",
+        "<LATITUDE>",
+        "<LONGITUDE>",
+        altitude="<ALTITUDE>",
+        check_status_before_request=True,
+    )
+
+    try:
+        print(await client.uv_index())
+    except ApiUnavailableError:
+        print("The API is unavailable")
     except OpenUvError as err:
         print(f"There was an error: {err}")
 
