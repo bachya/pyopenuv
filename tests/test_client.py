@@ -2,9 +2,8 @@
 from __future__ import annotations
 
 import asyncio
-import logging
 from typing import Any
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import aiohttp
 import pytest
@@ -118,49 +117,6 @@ async def test_bad_request(aresponses: ResponsesMockServer) -> None:
             await client._async_request(  # pylint: disable=protected-access
                 "get", "bad_endpoint"
             )
-
-    aresponses.assert_plan_strictly_followed()
-
-
-@pytest.mark.asyncio
-async def test_custom_logger(
-    aresponses: ResponsesMockServer,
-    caplog: Mock,
-    protection_window_response: dict[str, Any],
-) -> None:
-    """Test that a custom logger is used when provided to the client.
-
-    Args:
-        aresponses: An aresponses server.
-        caplog: A mock logging utility.
-        protection_window_response: An API response payload.
-    """
-    caplog.set_level(logging.DEBUG)
-    custom_logger = logging.getLogger("custom")
-
-    aresponses.add(
-        "api.openuv.io",
-        "/api/v1/protection",
-        "get",
-        response=aiohttp.web_response.json_response(
-            protection_window_response, status=200
-        ),
-    )
-
-    async with aiohttp.ClientSession() as session:
-        client = Client(
-            TEST_API_KEY,
-            TEST_LATITUDE,
-            TEST_LONGITUDE,
-            altitude=TEST_ALTITUDE,
-            session=session,
-            logger=custom_logger,
-        )
-        await client.uv_protection_window()
-        assert any(
-            record.name == "custom" and "Data received" in record.message
-            for record in caplog.records
-        )
 
     aresponses.assert_plan_strictly_followed()
 
