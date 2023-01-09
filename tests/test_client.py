@@ -16,17 +16,22 @@ from tests.common import TEST_ALTITUDE, TEST_API_KEY, TEST_LATITUDE, TEST_LONGIT
 
 
 @pytest.mark.asyncio
-async def test_bad_api_key(aresponses: ResponsesMockServer) -> None:
+async def test_bad_api_key(
+    aresponses: ResponsesMockServer, error_invalid_api_key_response: dict[str, Any]
+) -> None:
     """Test the that the proper exception is raised with a bad API key.
 
     Args:
         aresponses: An aresponses server.
+        error_invalid_api_key_response: An API response payload.
     """
     aresponses.add(
         "api.openuv.io",
         "/api/v1/protection",
         "get",
-        aresponses.Response(text="", status=403),
+        response=aiohttp.web_response.json_response(
+            error_invalid_api_key_response, status=403
+        ),
     )
 
     with pytest.raises(InvalidApiKeyError):
@@ -37,7 +42,6 @@ async def test_bad_api_key(aresponses: ResponsesMockServer) -> None:
                 TEST_LONGITUDE,
                 altitude=TEST_ALTITUDE,
                 session=session,
-                request_retries=1,
             )
             await client.uv_protection_window()
 
@@ -66,9 +70,10 @@ async def test_bad_request(aresponses: ResponsesMockServer) -> None:
                 TEST_LONGITUDE,
                 altitude=TEST_ALTITUDE,
                 session=session,
-                request_retries=1,
             )
-            await client.async_request("get", "bad_endpoint")
+            await client._async_request(  # pylint: disable=protected-access
+                "get", "bad_endpoint"
+            )
 
     aresponses.assert_plan_strictly_followed()
 
@@ -109,7 +114,7 @@ async def test_custom_logger(
         )
         await client.uv_protection_window()
         assert any(
-            record.name == "custom" and "Received data" in record.message
+            record.name == "custom" and "Data received" in record.message
             for record in caplog.records
         )
 
@@ -150,65 +155,6 @@ async def test_protection_window(
 
 
 @pytest.mark.asyncio
-async def test_request_retries(
-    aresponses: ResponsesMockServer, uv_index_response: dict[str, Any]
-) -> None:
-    """Test the request retry logic.
-
-    Args:
-        aresponses: An aresponses server.
-        uv_index_response: An API response payload.
-    """
-    aresponses.add(
-        "api.openuv.io",
-        "/api/v1/uv",
-        "get",
-        aresponses.Response(
-            text="Not Found",
-            status=404,
-            headers={"Content-Type": "application/json"},
-        ),
-    )
-    aresponses.add(
-        "api.openuv.io",
-        "/api/v1/uv",
-        "get",
-        aresponses.Response(
-            text="Not Found",
-            status=404,
-            headers={"Content-Type": "application/json"},
-        ),
-    )
-    aresponses.add(
-        "api.openuv.io",
-        "/api/v1/uv",
-        "get",
-        response=aiohttp.web_response.json_response(uv_index_response, status=200),
-    )
-
-    async with aiohttp.ClientSession() as session:
-        client = Client(
-            TEST_API_KEY,
-            TEST_LATITUDE,
-            TEST_LONGITUDE,
-            altitude=TEST_ALTITUDE,
-            session=session,
-        )
-
-        client.disable_request_retries()
-
-        with pytest.raises(RequestError):
-            await client.uv_index()
-
-        client.enable_request_retries()
-
-        data = await client.uv_index()
-        assert data["result"]["uv"] == 8.2342
-
-    aresponses.assert_plan_strictly_followed()
-
-
-@pytest.mark.asyncio
 async def test_session_from_scratch(
     aresponses: ResponsesMockServer, uv_forecast_response: dict[str, Any]
 ) -> None:
@@ -242,7 +188,6 @@ async def test_timeout() -> None:
             TEST_LONGITUDE,
             altitude=TEST_ALTITUDE,
             session=session,
-            request_retries=1,
         )
 
         with patch(

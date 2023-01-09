@@ -66,34 +66,6 @@ async def main():
 asyncio.run(main())
 ```
 
-## Retries
-
-By default, `pyopenuv` will retry appropriate errors 4 times (with an exponentially
-increasing delay in-between). This logic can be changed by passing a different value for
-`request_retries` to the `Client` constructor:
-
-```python
-import asyncio
-
-from pyopenuv import Client
-from pyopenuv.errors import OpenUvError
-
-
-async def main():
-    client = Client(
-        "<OPENUV_API_KEY>",
-        "<LATITUDE>",
-        "<LONGITUDE>",
-        altitude="<ALTITUDE>",
-        request_retries=5,
-    )
-
-    # ...
-
-
-asyncio.run(main())
-```
-
 ## Connection Pooling
 
 By default, the library creates a new connection to OpenUV with each coroutine. If you
