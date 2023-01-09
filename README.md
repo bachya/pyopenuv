@@ -51,14 +51,25 @@ async def main():
     )
 
     try:
+        # Get the current status of the OpenUV API:
+        print(await client.api_status())
+        # >>> True
+
         # Get current UV info:
         print(await client.uv_index())
+        # >>> { "result": { ... } }
 
         # Get forecasted UV info:
         print(await client.uv_forecast())
+        # >>> { "result": { ... } }
 
         # Get UV protection window:
         print(await client.uv_protection_window())
+        # >>> { "result": { ... } }
+
+        # Get API usage info/statistics:
+        print(await client.api_statistics())
+        # >>> { "result": { ... } }
     except OpenUvError as err:
         print(f"There was an error: {err}")
 
@@ -66,17 +77,17 @@ async def main():
 asyncio.run(main())
 ```
 
-## Retries
+## Checking API Status Before Requests
 
-By default, `pyopenuv` will retry appropriate errors 4 times (with an exponentially
-increasing delay in-between). This logic can be changed by passing a different value for
-`request_retries` to the `Client` constructor:
+If you would prefer to not call `api_status` manually, you can configure the `Client` object
+to automatically check the status of the OpenUV API before executing any of the API
+methods—simply pass the `check_status_before_request` parameter:
 
 ```python
 import asyncio
 
 from pyopenuv import Client
-from pyopenuv.errors import OpenUvError
+from pyopenuv.errors import ApiUnavailableError, OpenUvError
 
 
 async def main():
@@ -85,10 +96,15 @@ async def main():
         "<LATITUDE>",
         "<LONGITUDE>",
         altitude="<ALTITUDE>",
-        request_retries=5,
+        check_status_before_request=True,
     )
 
-    # ...
+    try:
+        print(await client.uv_index())
+    except ApiUnavailableError:
+        print("The API is unavailable")
+    except OpenUvError as err:
+        print(f"There was an error: {err}")
 
 
 asyncio.run(main())
@@ -120,14 +136,7 @@ async def main():
         )
 
         try:
-            # Get current UV info:
             print(await client.uv_index())
-
-            # Get forecasted UV info:
-            print(await client.uv_forecast())
-
-            # Get UV protection window:
-            print(await client.uv_protection_window())
         except OpenUvError as err:
             print(f"There was an error: {err}")
 
