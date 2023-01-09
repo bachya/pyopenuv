@@ -11,39 +11,8 @@ import pytest
 from aresponses import ResponsesMockServer
 
 from pyopenuv import Client
-from pyopenuv.errors import InvalidApiKeyError, RequestError
+from pyopenuv.errors import ApiUnavailableError, InvalidApiKeyError, RequestError
 from tests.common import TEST_ALTITUDE, TEST_API_KEY, TEST_LATITUDE, TEST_LONGITUDE
-
-
-@pytest.mark.asyncio
-async def test_api_status(
-    aresponses: ResponsesMockServer, api_status_response: dict[str, Any]
-) -> None:
-    """Test successfully retrieving the status of the API.
-
-    Args:
-        aresponses: An aresponses server.
-        api_status_response: An API response payload.
-    """
-    aresponses.add(
-        "api.openuv.io",
-        "/api/v1/status",
-        "get",
-        response=aiohttp.web_response.json_response(api_status_response, status=200),
-    )
-
-    async with aiohttp.ClientSession() as session:
-        client = Client(
-            TEST_API_KEY,
-            TEST_LATITUDE,
-            TEST_LONGITUDE,
-            altitude=TEST_ALTITUDE,
-            session=session,
-        )
-        data = await client.api_status()
-        assert data["status"] is True
-
-    aresponses.assert_plan_strictly_followed()
 
 
 @pytest.mark.asyncio
@@ -285,5 +254,58 @@ async def test_uv_index(
         )
         data = await client.uv_index()
         assert data["result"]["uv"] == 8.2342
+
+    aresponses.assert_plan_strictly_followed()
+
+
+@pytest.mark.asyncio
+async def test_uv_index_with_api_status_check_first(
+    aresponses: ResponsesMockServer,
+    api_status_response: dict[str, Any],
+    uv_index_response: dict[str, Any],
+) -> None:
+    """Test successfully retrieving UV index info after confirming the API status.
+
+    Args:
+        aresponses: An aresponses server.
+        api_status_response: An API response payload.
+        uv_index_response: An API response payload.
+    """
+    aresponses.add(
+        "api.openuv.io",
+        "/api/v1/status",
+        "get",
+        response=aiohttp.web_response.json_response(api_status_response, status=200),
+    )
+    aresponses.add(
+        "api.openuv.io",
+        "/api/v1/uv",
+        "get",
+        response=aiohttp.web_response.json_response(uv_index_response, status=200),
+    )
+    aresponses.add(
+        "api.openuv.io",
+        "/api/v1/status",
+        "get",
+        response=aiohttp.web_response.json_response({"status": False}, status=200),
+    )
+
+    async with aiohttp.ClientSession() as session:
+        client = Client(
+            TEST_API_KEY,
+            TEST_LATITUDE,
+            TEST_LONGITUDE,
+            altitude=TEST_ALTITUDE,
+            session=session,
+            check_status_before_request=True,
+        )
+
+        # Test getting the data with a successful API status check:
+        data = await client.uv_index()
+        assert data["result"]["uv"] == 8.2342
+
+        # Test raising when the API status check fails on a second attempt:
+        with pytest.raises(ApiUnavailableError):
+            data = await client.uv_index()
 
     aresponses.assert_plan_strictly_followed()

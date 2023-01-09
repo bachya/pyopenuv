@@ -7,6 +7,12 @@ class OpenUvError(Exception):
     pass
 
 
+class ApiUnavailableError(OpenUvError):
+    """Define an error related to the OpenUV API being down."""
+
+    pass
+
+
 class InvalidApiKeyError(OpenUvError):
     """Define an error related to invalid API keys."""
 

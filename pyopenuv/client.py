@@ -3,13 +3,13 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Any
+from typing import Any, cast
 
 from aiohttp import ClientSession, ClientTimeout
 from aiohttp.client_exceptions import ClientError
 
 from .const import LOGGER
-from .errors import InvalidApiKeyError, RequestError
+from .errors import ApiUnavailableError, InvalidApiKeyError, RequestError
 
 API_URL_SCAFFOLD = "https://api.openuv.io/api/v1"
 
@@ -30,6 +30,7 @@ class Client:
         altitude: float = 0.0,
         logger: logging.Logger | None = None,
         session: ClientSession | None = None,
+        check_status_before_request: bool = False,
     ) -> None:
         """Initialize.
 
@@ -40,10 +41,13 @@ class Client:
             altitude: An altitude.
             logger: An optional logger.
             session: An optional aiohttp ClientSession.
+            check_status_before_request: Whether the API status should be checked prior
+                to every request.
         """
         self._api_key = api_key
         self._session = session
         self.altitude = str(altitude)
+        self.check_status_before_request = check_status_before_request
         self.latitude = str(latitude)
         self.longitude = str(longitude)
 
@@ -51,6 +55,17 @@ class Client:
             self._logger = logger
         else:
             self._logger = LOGGER
+
+    async def _async_check_api_status_if_required(self) -> None:
+        """Check the status of the API if configured to do so.
+
+        Raises:
+            ApiUnavailableError: Raised when the API is unavailable.
+        """
+        if not self.check_status_before_request or await self.api_status():
+            return
+
+        raise ApiUnavailableError("The OpenUV API is unavailable")
 
     async def _async_request(
         self, method: str, endpoint: str, **kwargs: dict[str, str]
@@ -110,13 +125,14 @@ class Client:
 
         return data
 
-    async def api_status(self) -> dict[str, Any]:
+    async def api_status(self) -> bool:
         """Get the current status of the API.
 
         Returns:
-            An API response payload.
+            True if the API is available, False if it is unavailable
         """
-        return await self._async_request("get", "status")
+        resp = await self._async_request("get", "status")
+        return cast(bool, resp["status"])
 
     async def uv_forecast(self) -> dict[str, Any]:
         """Get forecasted UV data.
@@ -124,6 +140,7 @@ class Client:
         Returns:
             An API response payload.
         """
+        await self._async_check_api_status_if_required()
         return await self._async_request("get", "forecast")
 
     async def uv_index(self) -> dict[str, Any]:
@@ -132,6 +149,7 @@ class Client:
         Returns:
             An API response payload.
         """
+        await self._async_check_api_status_if_required()
         return await self._async_request("get", "uv")
 
     async def uv_protection_window(
@@ -146,6 +164,7 @@ class Client:
         Returns:
             An API response payload.
         """
+        await self._async_check_api_status_if_required()
         return await self._async_request(
             "get", "protection", params={"from": str(low), "to": str(high)}
         )
