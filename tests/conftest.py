@@ -9,6 +9,18 @@ import pytest
 from .common import load_fixture
 
 
+@pytest.fixture(name="api_statistics_response", scope="session")
+def api_statistics_response_fixture() -> dict[str, Any]:
+    """Define a fixture to return an API status response.
+
+    Returns:
+        An API response payload.
+    """
+    return cast(
+        dict[str, Any], json.loads(load_fixture("api_statistics_response.json"))
+    )
+
+
 @pytest.fixture(name="api_status_response", scope="session")
 def api_status_response_fixture() -> dict[str, Any]:
     """Define a fixture to return an API status response.

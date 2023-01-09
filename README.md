@@ -66,6 +66,10 @@ async def main():
         # Get UV protection window:
         print(await client.uv_protection_window())
         # >>> { "result": { ... } }
+
+        # Get API usage info/statistics:
+        print(await client.api_statistics())
+        # >>> { "result": { ... } }
     except OpenUvError as err:
         print(f"There was an error: {err}")
 
