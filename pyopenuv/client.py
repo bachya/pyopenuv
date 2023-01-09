@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import asyncio
-import logging
 from typing import Any, cast
 
 from aiohttp import ClientSession, ClientTimeout
@@ -28,7 +27,6 @@ class Client:
         longitude: float,
         *,
         altitude: float = 0.0,
-        logger: logging.Logger | None = None,
         session: ClientSession | None = None,
         check_status_before_request: bool = False,
     ) -> None:
@@ -39,7 +37,6 @@ class Client:
             latitude: A latitude.
             longitude: A longitude.
             altitude: An altitude.
-            logger: An optional logger.
             session: An optional aiohttp ClientSession.
             check_status_before_request: Whether the API status should be checked prior
                 to every request.
@@ -50,11 +47,6 @@ class Client:
         self.check_status_before_request = check_status_before_request
         self.latitude = str(latitude)
         self.longitude = str(longitude)
-
-        if logger:
-            self._logger = logger
-        else:
-            self._logger = LOGGER
 
     async def _async_check_api_status_if_required(self) -> None:
         """Check the status of the API if configured to do so.
@@ -121,7 +113,7 @@ class Client:
             if not use_running_session:
                 await session.close()
 
-        self._logger.debug("Data received for %s: %s", endpoint, data)
+        LOGGER.debug("Data received for %s: %s", endpoint, data)
 
         return data
 
