@@ -125,6 +125,15 @@ class Client:
 
         return data
 
+    async def api_statistics(self) -> dict[str, Any]:
+        """Get API usage statistics.
+
+        Returns:
+            An API response payload.
+        """
+        await self._async_check_api_status_if_required()
+        return await self._async_request("get", "stat")
+
     async def api_status(self) -> bool:
         """Get the current status of the API.
 
