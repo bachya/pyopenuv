@@ -16,6 +16,37 @@ from tests.common import TEST_ALTITUDE, TEST_API_KEY, TEST_LATITUDE, TEST_LONGIT
 
 
 @pytest.mark.asyncio
+async def test_api_status(
+    aresponses: ResponsesMockServer, api_status_response: dict[str, Any]
+) -> None:
+    """Test successfully retrieving the status of the API.
+
+    Args:
+        aresponses: An aresponses server.
+        api_status_response: An API response payload.
+    """
+    aresponses.add(
+        "api.openuv.io",
+        "/api/v1/status",
+        "get",
+        response=aiohttp.web_response.json_response(api_status_response, status=200),
+    )
+
+    async with aiohttp.ClientSession() as session:
+        client = Client(
+            TEST_API_KEY,
+            TEST_LATITUDE,
+            TEST_LONGITUDE,
+            altitude=TEST_ALTITUDE,
+            session=session,
+        )
+        data = await client.api_status()
+        assert data["status"] is True
+
+    aresponses.assert_plan_strictly_followed()
+
+
+@pytest.mark.asyncio
 async def test_bad_api_key(
     aresponses: ResponsesMockServer, error_invalid_api_key_response: dict[str, Any]
 ) -> None:
@@ -228,10 +259,10 @@ async def test_uv_forecast(
 
 
 @pytest.mark.asyncio
-async def test_uv_index_async(
+async def test_uv_index(
     aresponses: ResponsesMockServer, uv_index_response: dict[str, Any]
 ) -> None:
-    """Test successfully retrieving UV index info (async).
+    """Test successfully retrieving UV index info.
 
     Args:
         aresponses: An aresponses server.

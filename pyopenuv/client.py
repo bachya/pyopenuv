@@ -110,6 +110,14 @@ class Client:
 
         return data
 
+    async def api_status(self) -> dict[str, Any]:
+        """Get the current status of the API.
+
+        Returns:
+            An API response payload.
+        """
+        return await self._async_request("get", "status")
+
     async def uv_forecast(self) -> dict[str, Any]:
         """Get forecasted UV data.
 
