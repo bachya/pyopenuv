@@ -43,6 +43,18 @@ def error_invalid_api_key_response_fixture() -> dict[str, Any]:
     )
 
 
+@pytest.fixture(name="error_rate_limit_response", scope="session")
+def error_rate_limit_response_fixture() -> dict[str, Any]:
+    """Define a fixture to return an rate limit error response.
+
+    Returns:
+        An API response payload.
+    """
+    return cast(
+        dict[str, Any], json.loads(load_fixture("error_rate_limit_response.json"))
+    )
+
+
 @pytest.fixture(name="protection_window_response", scope="session")
 def protection_window_response_fixture() -> dict[str, Any]:
     """Define a fixture to return a protection window response.

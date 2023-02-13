@@ -5,10 +5,10 @@ import asyncio
 from typing import Any, cast
 
 from aiohttp import ClientSession, ClientTimeout
-from aiohttp.client_exceptions import ClientError
+from aiohttp.client_exceptions import ClientError, ContentTypeError
 
 from .const import LOGGER
-from .errors import ApiUnavailableError, InvalidApiKeyError, RequestError
+from .errors import ApiUnavailableError, raise_error
 
 API_URL_SCAFFOLD = "https://api.openuv.io/api/v1"
 
@@ -71,10 +71,6 @@ class Client:
 
         Returns:
             An API response payload.
-
-        Raises:
-            InvalidApiKeyError: Raised on an invalid API key.
-            RequestError: Raised on an HTTP error or request timeout.
         """
         kwargs.setdefault("headers", {})
         kwargs["headers"]["x-access-token"] = self._api_key
@@ -94,21 +90,17 @@ class Client:
 
         try:
             async with session.request(method, url, **kwargs) as resp:
+                data = await resp.json()
+                raising_err = None
+
                 try:
-                    data = await resp.json()
                     resp.raise_for_status()
                 except ClientError as err:
-                    if resp.status in (401, 403):
-                        raise InvalidApiKeyError("Invalid API key") from err
+                    raising_err = err
 
-                    error_msg = data.get("error", str(err))
-                    raise RequestError(
-                        f"Error while querying {url}: {error_msg}"
-                    ) from err
-        except asyncio.TimeoutError as err:
-            raise RequestError(
-                f"Error while querying {url}: Request timed out"
-            ) from err
+                raise_error(endpoint, data, raising_err)
+        except (asyncio.TimeoutError, ContentTypeError) as err:
+            raise_error(endpoint, {"error": str(err)}, err)
         finally:
             if not use_running_session:
                 await session.close()
