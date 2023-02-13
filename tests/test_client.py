@@ -10,7 +10,12 @@ import pytest
 from aresponses import ResponsesMockServer
 
 from pyopenuv import Client
-from pyopenuv.errors import ApiUnavailableError, InvalidApiKeyError, RequestError
+from pyopenuv.errors import (
+    ApiUnavailableError,
+    InvalidApiKeyError,
+    RateLimitExceededError,
+    RequestError,
+)
 from tests.common import TEST_ALTITUDE, TEST_API_KEY, TEST_LATITUDE, TEST_LONGITUDE
 
 
@@ -59,7 +64,37 @@ async def test_api_statistics(
 
 
 @pytest.mark.asyncio
-async def test_bad_api_key(
+async def test_bad_request(aresponses: ResponsesMockServer) -> None:
+    """Test that the proper exception is raised during a bad request.
+
+    Args:
+        aresponses: An aresponses server.
+    """
+    aresponses.add(
+        "api.openuv.io",
+        "/api/v1/bad_endpoint",
+        "get",
+        aresponses.Response(text="", status=500),
+    )
+
+    with pytest.raises(RequestError):
+        async with aiohttp.ClientSession() as session:
+            client = Client(
+                TEST_API_KEY,
+                TEST_LATITUDE,
+                TEST_LONGITUDE,
+                altitude=TEST_ALTITUDE,
+                session=session,
+            )
+            await client._async_request(  # pylint: disable=protected-access
+                "get", "bad_endpoint"
+            )
+
+    aresponses.assert_plan_strictly_followed()
+
+
+@pytest.mark.asyncio
+async def test_error_invalid_api_key(
     aresponses: ResponsesMockServer, error_invalid_api_key_response: dict[str, Any]
 ) -> None:
     """Test the that the proper exception is raised with a bad API key.
@@ -92,20 +127,25 @@ async def test_bad_api_key(
 
 
 @pytest.mark.asyncio
-async def test_bad_request(aresponses: ResponsesMockServer) -> None:
-    """Test that the proper exception is raised during a bad request.
+async def test_error_rate_limited(
+    aresponses: ResponsesMockServer, error_rate_limit_response: dict[str, Any]
+) -> None:
+    """Test the that the proper exception is raised when the rate limit is reached.
 
     Args:
         aresponses: An aresponses server.
+        error_rate_limit_response: An API response payload.
     """
     aresponses.add(
         "api.openuv.io",
-        "/api/v1/bad_endpoint",
+        "/api/v1/protection",
         "get",
-        aresponses.Response(text="", status=500),
+        response=aiohttp.web_response.json_response(
+            error_rate_limit_response, status=403
+        ),
     )
 
-    with pytest.raises(RequestError):
+    with pytest.raises(RateLimitExceededError):
         async with aiohttp.ClientSession() as session:
             client = Client(
                 TEST_API_KEY,
@@ -114,9 +154,7 @@ async def test_bad_request(aresponses: ResponsesMockServer) -> None:
                 altitude=TEST_ALTITUDE,
                 session=session,
             )
-            await client._async_request(  # pylint: disable=protected-access
-                "get", "bad_endpoint"
-            )
+            await client.uv_protection_window()
 
     aresponses.assert_plan_strictly_followed()
 
