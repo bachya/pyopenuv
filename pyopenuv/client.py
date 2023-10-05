@@ -20,7 +20,7 @@ DEFAULT_TIMEOUT = 30
 class Client:
     """Define the client."""
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         api_key: str,
         latitude: float,
