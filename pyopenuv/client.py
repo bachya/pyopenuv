@@ -1,4 +1,5 @@
 """Define a client to interact with openuv.io."""
+
 from __future__ import annotations
 
 import asyncio
